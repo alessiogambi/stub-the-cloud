@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="false">
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%m%n</pattern>
+		</encoder>
+	</appender>
+	<root>
+		<level value="info" />
+	</root>
+
+	<logger name="org.jclouds">
+		<level value="DEBUG" />
+		<appender-ref ref="FILE" />
+	</logger>
+
+	<logger name="jclouds.compute">
+		<level value="DEBUG" />
+		<appender-ref ref="COMPUTEFILE" />
+	</logger>
+
+	<logger name="jclouds.wire">
+		<level value="DEBUG" />
+		<appender-ref ref="WIREFILE" />
+	</logger>
+
+	<logger name="jclouds.headers">
+		<level value="DEBUG" />
+		<appender-ref ref="WIREFILE" />
+	</logger>
+
+	<logger name="jclouds.ssh">
+		<level value="DEBUG" />
+		<appender-ref ref="SSHFILE" />
+	</logger>
+
+	<logger name="net.schmizz">
+		<level value="DEBUG" />
+		<appender-ref ref="SSHFILE" />
+	</logger>
+</configuration>
