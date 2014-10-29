@@ -50,10 +50,15 @@ public class DeclarativeStubComputeServiceAdapter implements
 		cloud = new DeclarativeCloud();
 	}
 
+	// FIXME
+	// TODO Can Squander generate random strings ?!
 	@Override
 	public NodeMetadata getNode(String id) {
 		// Bridge the inner model/spec to the outer one
-		DeclarativeNode abstractNode = cloud.getNode(id);
+		// ID to int
+		DeclarativeNode n = new DeclarativeNode();
+		n.setId(Integer.parseInt(id));
+		DeclarativeNode abstractNode = cloud.getNode(n);
 
 		NodeMetadataBuilder builder = new NodeMetadataBuilder();
 		builder.ids("" + abstractNode.getId());

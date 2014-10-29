@@ -18,6 +18,8 @@ import edu.mit.csail.sdg.squander.annotations.Options;
  *
  */
 
+// TODO Possibly the DeclarativeNode can be directly specified in here !!
+
 @SpecField({ "vms : set DeclarativeNode" })
 @Invariant({//
 /* All the VM must have unique ID */
@@ -33,13 +35,6 @@ public class DeclarativeCloud {
 	@Ensures({ "no this.vms" })
 	private void init() {
 		Squander.exe(this);
-	}
-
-	@Ensures("return.id == id")
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Modifies("return.id")
-	public DeclarativeNode getNode(String id) {
-		return Squander.exe(this, id);
 	}
 
 	@Ensures("return.elts == this.vms")
@@ -58,4 +53,53 @@ public class DeclarativeCloud {
 		return Squander.exe(this);
 	}
 
+	@Requires({
+			// At least one VM
+			"some this.vms",
+			// The node to stop must be in the running nodes
+			"node.id in this.vms.id" })
+	@Ensures({ "node.id !in this.vms.id && #this.vms = #@old(this.vms) - 1" })
+	@Modifies({ "this.vms", })
+	public void removeNode(DeclarativeNode node) {
+		Squander.exe(this, node);
+	}
+
+	@Requires({
+			// At least one VM
+			"some this.vms",
+			// The node to stop must be in the running nodes
+			"_id in this.vms.id" })
+	@Ensures({ "_id !in this.vms.id && #this.vms = #@old(this.vms) - 1" })
+	@Modifies({ "this.vms", })
+	public void removeNode(int _id) {
+		Squander.exe(this, _id);
+	}
+
+	@Requires({
+			// At least one VM
+			"some this.vms",
+			// The node to stop must be in the running nodes
+			"node.id in this.vms.id" })
+	@Ensures("return.id == node.id")
+	@Modifies("return.id")
+	@FreshObjects(cls = DeclarativeNode.class, num = 1)
+	public DeclarativeNode getNode(DeclarativeNode node) {
+		return Squander.exe(this, node);
+	}
+
+	// TODO removeNode(int id) !! I know I can new DeclarativeNode( id ) but I
+	// do not want to !!
+	// TODO getNode(int id) !! I know I can new DeclarativeNode( id ) but I
+
+	@Requires({
+			// At least one VM
+			"some this.vms",
+			// The node to stop must be in the running nodes
+			"return.id in this.vms.id" })
+	@Ensures("return.id = _id")
+	@Modifies("return.id")
+	@FreshObjects(cls = DeclarativeNode.class, num = 1)
+	public DeclarativeNode getNode(int _id) {
+		return Squander.exe(this, _id);
+	}
 }
