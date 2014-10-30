@@ -2,6 +2,8 @@ package org.jclouds.compute.declarativestub.core;
 
 import java.util.Set;
 
+import org.jclouds.compute.domain.NodeMetadata;
+
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
@@ -19,14 +21,32 @@ import edu.mit.csail.sdg.squander.annotations.Options;
  */
 
 // TODO Possibly the DeclarativeNode can be directly specified in here !!
+// VM with state vs relations of VM ?
+@SpecField({ "vms : set DeclarativeNode",//
+		"running : set DeclarativeNode",//
+		"stopped : set DeclarativeNode",
 
-@SpecField({ "vms : set DeclarativeNode" })
+})
 @Invariant({//
 /* All the VM must have unique ID */
 "all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+/* Running Virtual Machines */
+"this.running in this.vms",
+/**/
+"all vm : this.running | vm.status = this.runningEnumStatus",
+/* Stopped Virtual Machines */
+"this.stopped in this.vms",
+/**/
+"all vm : this.stopped | vm.status = this.suspendedEnumStatus",
+/* All the VM must have 1 single state */
+" no (this.running & this.stopped)",
 /* Null is not an option */
 "null ! in this.vms" })
 public class DeclarativeCloud {
+
+	// For the moment this seems to work but not what I wanted :(
+	final NodeMetadata.Status runningEnumStatus = NodeMetadata.Status.RUNNING;
+	final NodeMetadata.Status suspendedEnumStatus = NodeMetadata.Status.SUSPENDED;
 
 	public DeclarativeCloud() {
 		init();
@@ -45,6 +65,7 @@ public class DeclarativeCloud {
 	}
 
 	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
+	@Requires("ids.elts in this.vms.id")
 	@Modifies("return.elts")
 	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
 	// TODO Integer -> String, Iterable -> Set
@@ -53,9 +74,11 @@ public class DeclarativeCloud {
 	}
 
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Ensures({ "this.vms = @old(this.vms) + return",//
-			"return !in @old(this.vms)" })
-	@Modifies({ "this.vms", "return.id" })
+	@Ensures({
+			"this.vms = @old(this.vms) + return",//
+			"return !in @old(this.vms)",
+			"return.status = this.runningEnumStatus" })
+	@Modifies({ "this.vms", "return.id", "return.status" })
 	@Options(ensureAllInts = true)
 	public DeclarativeNode createNode() {
 		return Squander.exe(this);
@@ -88,27 +111,56 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node to stop must be in the running nodes
 			"node.id in this.vms.id" })
-	@Ensures("return.id == node.id")
-	@Modifies("return.id")
+	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status")
+	@Modifies({ "return.id", "return.status" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(DeclarativeNode node) {
 		return Squander.exe(this, node);
 	}
 
-	// TODO removeNode(int id) !! I know I can new DeclarativeNode( id ) but I
-	// do not want to !!
-	// TODO getNode(int id) !! I know I can new DeclarativeNode( id ) but I
+	@Requires({
+			// At least one VM
+			"some this.vms",
+			// The node must be in the running nodes
+			"return.id in this.vms.id" })
+	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
+	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status")
+	@Modifies({ "return.id", "return.status" })
+	@FreshObjects(cls = DeclarativeNode.class, num = 1)
+	public DeclarativeNode getNode(int _id) {
+		return Squander.exe(this, _id);
+	}
 
 	@Requires({
 			// At least one VM
 			"some this.vms",
-			// The node to stop must be in the running nodes
-			"return.id in this.vms.id" })
-	@Ensures("return.id = _id")
-	@Modifies("return.id")
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	public DeclarativeNode getNode(int _id) {
-		return Squander.exe(this, _id);
+			// The node to start must be in the available nodes
+			"one vm : this.vms | vm.id == _id" })
+	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = this.runningEnumStatus)" })
+	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
+	/**
+	 * This call is idempotent
+	 * @param _id
+	 */
+	public void startNode(int _id) {
+		// TODO: by changing the state we change the running/stopped relation,
+		// but we do not declare them as "mofiable"
+		Squander.exe(this, _id);
+	}
+
+	@Requires({
+			// At least one VM
+			"some this.vms",
+			// The node to start must be in the available nodes
+			"one vm : this.vms | vm.id == _id" })
+	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = this.suspendedEnumStatus )" })
+	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
+	/**
+	 * This call is idempotent
+	 * @param _id
+	 */
+	public void suspendNode(int _id) {
+		Squander.exe(this, _id);
 	}
 
 }

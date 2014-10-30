@@ -3,6 +3,7 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jclouds.compute.domain.NodeMetadata;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -30,14 +31,17 @@ public class DeclarativeCloudTest {
 	}
 
 	@Test
-	public void testAddNode() {
+	public void testCreateNode() {
 		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
+		Assert.assertNotNull(n);
+		Assert.assertEquals(n.getStatus(), NodeMetadata.Status.RUNNING);
+
 	}
 
 	@Test
-	public void testAddAndListNode() {
+	public void testCreateAndListNode() {
 		DeclarativeCloud c = new DeclarativeCloud();
 		c.createNode();
 		Set<DeclarativeNode> nodes = c.getAllNodes();
@@ -47,7 +51,7 @@ public class DeclarativeCloudTest {
 	}
 
 	@Test
-	public void testAddNodes() {
+	public void testCreateNodes() {
 		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
@@ -152,7 +156,12 @@ public class DeclarativeCloudTest {
 		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		// Return the right node
-		Assert.assertTrue(c.getNode(n).getId() == n.getId());
+		DeclarativeNode _n = c.getNode(n);
+		// Assert ID
+		Assert.assertTrue(_n.getId() == n.getId());
+		// Assert STATE
+		Assert.assertEquals(c.getNode(n).getStatus(),
+				NodeMetadata.Status.RUNNING);
 	}
 
 	@Test
@@ -160,7 +169,22 @@ public class DeclarativeCloudTest {
 		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		// Return the right node
-		Assert.assertTrue(c.getNode(n.getId()).getId() == n.getId());
+		DeclarativeNode _n = c.getNode(n);
+		// Assert ID
+		Assert.assertTrue(_n.getId() == n.getId());
+		// Assert STATE
+		Assert.assertEquals(c.getNode(n).getStatus(),
+				NodeMetadata.Status.RUNNING);
+	}
+
+	private boolean hasStatus(Set<DeclarativeNode> nodes, DeclarativeNode node,
+			NodeMetadata.Status status) {
+		for (DeclarativeNode n : nodes) {
+			if (node.getId() == n.getId()) {
+				return status.equals(n.getStatus());
+			}
+		}
+		return false;
 	}
 
 	@Test
@@ -177,11 +201,14 @@ public class DeclarativeCloudTest {
 
 		// Exec
 		Set<DeclarativeNode> nodes = c.getNodes(ids);
-		// Check
+		// Check ID
 		Assert.assertTrue(containsID(nodes, n));
 		Assert.assertTrue(containsID(nodes, n1));
 		Assert.assertTrue(containsID(nodes, n2));
-
+		// Check States
+		Assert.assertTrue(hasStatus(nodes, n, NodeMetadata.Status.RUNNING));
+		Assert.assertTrue(hasStatus(nodes, n1, NodeMetadata.Status.RUNNING));
+		Assert.assertTrue(hasStatus(nodes, n2, NodeMetadata.Status.RUNNING));
 	}
 
 	@Test
@@ -206,6 +233,132 @@ public class DeclarativeCloudTest {
 		Assert.assertFalse(containsID(nodes, n2));
 
 	}
-	
-	
+
+	@Test
+	public void testSuspendNode() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		DeclarativeNode n = c.createNode();
+		//
+		c.suspendNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+	}
+
+	@Test
+	public void testSuspendOnlyTheNode() {
+		// WARNING: This test depends on the correctness of getNode!
+
+		DeclarativeCloud c = new DeclarativeCloud();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
+		DeclarativeNode n2 = c.createNode();
+		//
+		c.suspendNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+
+		// Idempotence
+		c.suspendNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+
+		//
+		c.suspendNode(n1.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+
+		//
+		c.suspendNode(n2.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+
+		System.out.println("DeclarativeCloudTest.testSuspendOnlyTheNode() "
+				+ c.getAllNodes());
+	}
+
+	@Test
+	public void testStartSuspendNode() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		DeclarativeNode n = c.createNode();
+		// WARNING: This test depends on the correctness of suspend !
+		c.suspendNode(n.getId());
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		// Execution
+		c.startNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		// Idempotence
+		c.startNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+	}
+
+	@Test
+	public void testStartOnlyTheSuspendNode() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
+		DeclarativeNode n2 = c.createNode();
+
+		// WARNING: This test depends on the correctness of suspend and get !
+		c.suspendNode(n.getId());
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+
+		// Execution
+		c.startNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		// Idempotence
+		c.startNode(n.getId());
+		//
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		// Act on the others
+		c.suspendNode(n1.getId());
+		c.suspendNode(n2.getId());
+		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
+				NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
+				NodeMetadata.Status.SUSPENDED);
+	}
 }

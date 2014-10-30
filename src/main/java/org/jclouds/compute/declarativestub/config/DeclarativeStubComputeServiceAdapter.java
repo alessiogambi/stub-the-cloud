@@ -177,7 +177,6 @@ public class DeclarativeStubComputeServiceAdapter implements
 		// TODO Shortcircuit then add name/group in the spec if needed
 		builder.name(name);
 		builder.group(group);
-
 		// Not even sure what this is about !
 		builder.credentials(LoginCredentials.builder().user("root")
 				.password("id").build());
@@ -236,14 +235,18 @@ public class DeclarativeStubComputeServiceAdapter implements
 	// TODO Require state definition. Not yet implemented
 	@Override
 	public void rebootNode(String id) {
+		// TODO Do nothing for the moment, later this will become something like
+		// running -> stop -> running
 	}
 
 	@Override
 	public void resumeNode(String id) {
+		cloud.startNode(Integer.parseInt(id));
 	}
 
 	@Override
 	public void suspendNode(String id) {
+		cloud.suspendNode(Integer.parseInt(id));
 	}
 
 	/**
