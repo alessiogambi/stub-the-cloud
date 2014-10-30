@@ -1,5 +1,6 @@
 package org.jclouds.compute.declarativestub.core;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.testng.Assert;
@@ -31,14 +32,14 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testAddNode() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
+		DeclarativeNode n = c.createNode();
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 	}
 
 	@Test
 	public void testAddAndListNode() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		c.addNode();
+		c.createNode();
 		Set<DeclarativeNode> nodes = c.getAllNodes();
 		System.out.println("DeclarativeCloudTest.testAddAndListNode() Nodes "
 				+ nodes);
@@ -48,8 +49,8 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testAddNodes() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
-		DeclarativeNode n1 = c.addNode();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
 		System.out.println("DeclarativeCloudTest.testAddNodes() Node 1: " + n);
 		System.out.println("DeclarativeCloudTest.testAddNodes() Node 2: " + n1);
 	}
@@ -57,7 +58,7 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testRemoveNode() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
+		DeclarativeNode n = c.createNode();
 		c.removeNode(n);
 		Set<DeclarativeNode> nodes = c.getAllNodes();
 		System.out.println("DeclarativeCloudTest.testRemoveNode() Nodes"
@@ -68,7 +69,7 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testRemoveNodeByID() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
+		DeclarativeNode n = c.createNode();
 		c.removeNode(n.getId());
 		Set<DeclarativeNode> nodes = c.getAllNodes();
 		System.out.println("DeclarativeCloudTest.testRemoveNode() Nodes"
@@ -88,9 +89,9 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testRemoveNodes() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
-		DeclarativeNode n1 = c.addNode();
-		DeclarativeNode n2 = c.addNode();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
+		DeclarativeNode n2 = c.createNode();
 
 		// Removing n must result in a smaller cloud, but the other nodes must
 		// be there !
@@ -123,9 +124,9 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testRemoveNodesByID() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
-		DeclarativeNode n1 = c.addNode();
-		DeclarativeNode n2 = c.addNode();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
+		DeclarativeNode n2 = c.createNode();
 
 		// Removing n must result in a smaller cloud, but the other nodes must
 		// be there !
@@ -149,7 +150,7 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testGetNode() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
+		DeclarativeNode n = c.createNode();
 		// Return the right node
 		Assert.assertTrue(c.getNode(n).getId() == n.getId());
 	}
@@ -157,8 +158,54 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testGetNodeByID() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		DeclarativeNode n = c.addNode();
+		DeclarativeNode n = c.createNode();
 		// Return the right node
 		Assert.assertTrue(c.getNode(n.getId()).getId() == n.getId());
 	}
+
+	@Test
+	public void testGetNodesByID() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
+		DeclarativeNode n2 = c.createNode();
+		// Build the input
+		Set<Integer> ids = new HashSet<Integer>();
+		ids.add(n.getId());
+		ids.add(n1.getId());
+		ids.add(n2.getId());
+
+		// Exec
+		Set<DeclarativeNode> nodes = c.getNodes(ids);
+		// Check
+		Assert.assertTrue(containsID(nodes, n));
+		Assert.assertTrue(containsID(nodes, n1));
+		Assert.assertTrue(containsID(nodes, n2));
+
+	}
+
+	@Test
+	public void testGetNodeBySetID() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		DeclarativeNode n = c.createNode();
+		DeclarativeNode n1 = c.createNode();
+		DeclarativeNode n2 = c.createNode();
+		// Build the input
+		Set<Integer> ids = new HashSet<Integer>();
+		ids.add(n.getId());
+
+		// Exec
+		Set<DeclarativeNode> nodes = c.getNodes(ids);
+
+		System.out
+				.println("DeclarativeCloudTest.testGetNodeBySetID() NODES BY ID "
+						+ nodes);
+		// Check
+		Assert.assertTrue(containsID(nodes, n));
+		Assert.assertFalse(containsID(nodes, n1));
+		Assert.assertFalse(containsID(nodes, n2));
+
+	}
+	
+	
 }

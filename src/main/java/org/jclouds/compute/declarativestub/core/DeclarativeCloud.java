@@ -44,12 +44,20 @@ public class DeclarativeCloud {
 		return Squander.exe(this);
 	}
 
+	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
+	@Modifies("return.elts")
+	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
+	// TODO Integer -> String, Iterable -> Set
+	public Set<DeclarativeNode> getNodes(Set<Integer> ids) {
+		return Squander.exe(this, ids);
+	}
+
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	@Ensures({ "this.vms = @old(this.vms) + return",//
 			"return !in @old(this.vms)" })
 	@Modifies({ "this.vms", "return.id" })
 	@Options(ensureAllInts = true)
-	public DeclarativeNode addNode() {
+	public DeclarativeNode createNode() {
 		return Squander.exe(this);
 	}
 
@@ -102,4 +110,5 @@ public class DeclarativeCloud {
 	public DeclarativeNode getNode(int _id) {
 		return Squander.exe(this, _id);
 	}
+
 }

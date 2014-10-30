@@ -203,15 +203,15 @@ public class DeclarativeStubComputeServiceDependenciesModule extends
 
 	}
 
-	static Hardware stub(String type, int cores, int ram, float disk) {
-		return new org.jclouds.compute.domain.HardwareBuilder()
-				.ids(type)
-				.name(type)
-				.processors(ImmutableList.of(new Processor(cores, 1.0)))
-				.ram(ram)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl(disk, true,
-								false))).build();
-	}
+//	static Hardware stub(String type, int cores, int ram, float disk) {
+//		return new org.jclouds.compute.domain.HardwareBuilder()
+//				.ids(type)
+//				.name(type)
+//				.processors(ImmutableList.of(new Processor(cores, 1.0)))
+//				.ram(ram)
+//				.volumes(
+//						ImmutableList.<Volume> of(new VolumeImpl(disk, true,
+//								false))).build();
+//	}
 
 }

@@ -39,7 +39,7 @@ public class DeclarativeStubApiMetadata extends BaseApiMetadata {
 					.identityName("Unused")
 					.defaultIdentity("declarative-stub")
 					.defaultCredential("declarative-stub")
-					.defaultEndpoint("local memory")
+					.defaultEndpoint("local-memory")
 					.documentation(
 							URI.create("http://www.infosys.tuwien.ac.at/staff/agambi/blog/"))
 					.view(ComputeServiceContext.class)
