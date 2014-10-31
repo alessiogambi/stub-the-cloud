@@ -1,35 +1,35 @@
 package org.jclouds.compute.declarativestub.core;
 
-import org.jclouds.compute.domain.NodeMetadata.Status;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 
 import edu.mit.csail.sdg.annotations.Invariant;
 
-@Invariant({ "this.status != null", "this.id != 0" })
+@Invariant({ "this.status != null", "this.id != null" })
 public class DeclarativeNode {
 
-	private int id;
-	// TODO This should be the same enum used by jclouds or at least mapped to
-	// it
-	private Status status; // 0 = stop, 1 = running
+	private NodeMetadataStatus status;
 
-	public int getId() {
+	// Avoid trivially false invariant
+	private String id = "";
+
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
 	public String toString() {
-		return "Node = " + getId() + " " + getStatus() + " -- "
-				+ this.hashCode();
+		return "Node = " + "ID:" + getId() + ", " + "Status: " + getStatus()
+				+ " -- " + this.hashCode();
 	}
 
-	public Status getStatus() {
+	public NodeMetadataStatus getStatus() {
 		return status;
 	}
 
-	public void setState(Status status) {
+	public void setState(NodeMetadataStatus status) {
 		this.status = status;
 	}
 }

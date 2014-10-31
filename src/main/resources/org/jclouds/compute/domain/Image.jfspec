@@ -1,0 +1,5 @@
+interface Image {
+
+    @SpecField("imageID : one String")
+
+}

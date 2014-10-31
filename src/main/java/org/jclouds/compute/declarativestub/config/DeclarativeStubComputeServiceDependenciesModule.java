@@ -9,13 +9,9 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeMetadata.Status;
-import org.jclouds.compute.domain.Processor;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.SecurityGroup;
-import org.jclouds.compute.domain.Volume;
-import org.jclouds.compute.domain.internal.VolumeImpl;
 import org.jclouds.compute.extensions.SecurityGroupExtension;
 import org.jclouds.compute.stub.extensions.StubSecurityGroupExtension;
 import org.jclouds.domain.Credentials;
@@ -26,7 +22,6 @@ import com.google.common.base.Supplier;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HostAndPort;
@@ -198,20 +193,20 @@ public class DeclarativeStubComputeServiceDependenciesModule extends
 				return false;
 			String id = input.getHostText().replace(publicIpPrefix, "");
 			NodeMetadata node = nodes.get(id);
-			return node != null && node.getStatus() == Status.RUNNING;
+			return node != null
+					&& node.getStatus() == NodeMetadataStatus.RUNNING;
 		}
-
 	}
 
-//	static Hardware stub(String type, int cores, int ram, float disk) {
-//		return new org.jclouds.compute.domain.HardwareBuilder()
-//				.ids(type)
-//				.name(type)
-//				.processors(ImmutableList.of(new Processor(cores, 1.0)))
-//				.ram(ram)
-//				.volumes(
-//						ImmutableList.<Volume> of(new VolumeImpl(disk, true,
-//								false))).build();
-//	}
+	// static Hardware stub(String type, int cores, int ram, float disk) {
+	// return new org.jclouds.compute.domain.HardwareBuilder()
+	// .ids(type)
+	// .name(type)
+	// .processors(ImmutableList.of(new Processor(cores, 1.0)))
+	// .ram(ram)
+	// .volumes(
+	// ImmutableList.<Volume> of(new VolumeImpl(disk, true,
+	// false))).build();
+	// }
 
 }

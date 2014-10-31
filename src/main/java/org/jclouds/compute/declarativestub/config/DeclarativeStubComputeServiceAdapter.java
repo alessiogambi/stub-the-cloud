@@ -18,6 +18,7 @@ import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
+import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.OperatingSystem;
@@ -32,7 +33,6 @@ import org.jclouds.domain.LoginCredentials;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -48,8 +48,9 @@ import com.google.common.collect.ImmutableSet;
 public class DeclarativeStubComputeServiceAdapter implements
 		JCloudsNativeComputeServiceAdapter {
 
-	// Spec of the Cloud
-	DeclarativeCloud cloud;
+	// Spec of the Cloud implemented with Squander (MIT)
+	// Possibly this implementation should be injected in the constructor !
+	private DeclarativeCloud cloud;
 
 	// Temporary Support for Test
 
@@ -71,11 +72,14 @@ public class DeclarativeStubComputeServiceAdapter implements
 	 */
 
 	/*
+	 * // Implementation of the PER-CLIENT view of virtual machines. The Per
+	 * client view is managed by guice
+	 * 
 	 * @Inject public StubComputeServiceAdapter(ConcurrentMap<String,
-	 * NodeMetadata> nodes,
+	 * NodeMetadata> nodes, // Execute State changes ?!
 	 * 
 	 * @Named(Constants.PROPERTY_IO_WORKER_THREADS) ListeningExecutorService
-	 * ioExecutor,
+	 * ioExecutor, // Generate unique id ?!
 	 * 
 	 * @Named("NODE_ID") Provider<Integer> idProvider,
 	 * 
@@ -87,6 +91,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	 * locationSupplier, Multimap<String, SecurityGroup> groupsForNodes,
 	 * 
 	 * @Named("GROUP_ID") Provider<Integer> groupIdProvider,
+	 * 
 	 * Optional<SecurityGroupExtension> securityGroupExtension) { this.nodes =
 	 * nodes; this.ioExecutor = ioExecutor; this.location = location;
 	 * this.idProvider = idProvider; this.publicIpPrefix = publicIpPrefix;
@@ -103,25 +108,68 @@ public class DeclarativeStubComputeServiceAdapter implements
 	 * the cloud
 	 */
 	// Temporary Support for the test
-			/** Provided via TODO */
+			/** Provided via TODO: Find Me ! */
 			Supplier<Location> location,
 			/**
-			 * Provided via
+			 * Provided via TODO Check me
 			 * {@link BaseComputeServiceContextModule#provideOsVersionMap}
 			 */
 			Map<OsFamily, Map<String, String>> osToVersionMap) {
 		//
-		cloud = new DeclarativeCloud();
-		//
+		cloud = new DeclarativeCloud(provideImages());
+
 		this.location = location;
 		this.osToVersionMap = osToVersionMap;
+	}
+
+	// Cannot be called from dependency modules withouth firstly inject os and
+	// location deps because it requires additional resources injected !
+	protected Set<Image> provideImages() {
+		ImmutableSet.Builder<Image> images = ImmutableSet.<Image> builder();
+		int id = 1;
+
+		for (boolean is64Bit : new boolean[] { true, false })
+			for (Entry<OsFamily, Map<String, String>> osVersions : osToVersionMap
+					.entrySet()) {
+
+				for (String version : ImmutableSet.copyOf(osVersions.getValue()
+						.values())) {
+
+					String desc = String.format("declarative-stub %s %s",
+							osVersions.getKey(), is64Bit);
+
+					// THIS SHOULD BE CREATED USING THE SPEC OF THE CLOUD AND A
+					// SMART
+					// PRECONDITION
+					Image image = new ImageBuilder()
+							.ids(id++ + "")
+							.name(osVersions.getKey().name())
+							.location(location.get())
+							.operatingSystem(
+									new OperatingSystem(osVersions.getKey(),
+											desc, version, null, desc, is64Bit))
+							.description(desc).status(ImageStatus.AVAILABLE)
+							.build();
+
+					System.out.println(
+
+					" \t DeclarativeStubComputeServiceAdapter.listImages() Creating IMAGE "
+							+ image.getId() + " - " + image.getDescription());
+
+					images.add(image);
+
+				}
+			}
+		return images.build();
 	}
 
 	@Override
 	public NodeMetadata getNode(String id) {
 		DeclarativeNode n = new DeclarativeNode();
+
 		// TODO Must be fixed from INTEGER to STRING !
-		n.setId(Integer.parseInt(id));
+		n.setId("" + "" + Integer.parseInt(id));
+
 		DeclarativeNode abstractNode = cloud.getNode(n);
 
 		NodeMetadataBuilder builder = new NodeMetadataBuilder();
@@ -133,7 +181,8 @@ public class DeclarativeStubComputeServiceAdapter implements
 
 	@Override
 	public Iterable<NodeMetadata> listNodes() {
-		Builder<NodeMetadata> nodesBuilder = ImmutableList.builder();
+		ImmutableList.Builder<NodeMetadata> nodesBuilder = ImmutableList
+				.builder();
 		for (DeclarativeNode node : cloud.getAllNodes()) {
 			NodeMetadataBuilder nodeMetadataBuilder = new NodeMetadataBuilder();
 			nodeMetadataBuilder.ids("" + node.getId());
@@ -146,11 +195,12 @@ public class DeclarativeStubComputeServiceAdapter implements
 	@Override
 	public Iterable<NodeMetadata> listNodesByIds(Iterable<String> ids) {
 		// TODO Remove this eventually
-		Set<Integer> _ids = new HashSet<Integer>();
+		Set<String> _ids = new HashSet<String>();
 		for (String id : ids) {
-			_ids.add(Integer.parseInt(id));
+			_ids.add("" + Integer.parseInt(id));
 		}
-		Builder<NodeMetadata> nodesBuilder = ImmutableList.builder();
+		ImmutableList.Builder<NodeMetadata> nodesBuilder = ImmutableList
+				.builder();
 		for (DeclarativeNode node : cloud.getNodes(_ids)) {
 			NodeMetadataBuilder nodeMetadataBuilder = new NodeMetadataBuilder();
 			nodeMetadataBuilder.ids("" + node.getId());
@@ -163,7 +213,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	@Override
 	public void destroyNode(final String id) {
 		// TODO String -> Int ID
-		cloud.removeNode(Integer.parseInt(id));
+		cloud.removeNode("" + Integer.parseInt(id));
 	}
 
 	@Override
@@ -186,71 +236,33 @@ public class DeclarativeStubComputeServiceAdapter implements
 		// original stub implementation
 		return new NodeWithInitialCredentials(node);
 
-		// NodeMetadataBuilder builder = new NodeMetadataBuilder();
-		// String id = idProvider.get() + "";
-		// builder.ids(id);
-		//
-		// // using a predictable name so tests will pass
-		// builder.hostname(group);
-		// builder.tags(template.getOptions().getTags());
-		// builder.userMetadata(template.getOptions().getUserMetadata());
-		//
-		// builder.location(location.get());
-		// builder.imageId(template.getImage().getId());
-		// builder.operatingSystem(template.getImage().getOperatingSystem());
-		// builder.status(Status.PENDING);
-		// builder.publicAddresses(ImmutableSet.<String> of(publicIpPrefix +
-		// id));
-		// builder.privateAddresses(ImmutableSet.<String> of(privateIpPrefix +
-		// id));
-
-		// NodeMetadata node = builder.build();
-		// Update the STATE
-		// nodes.put(node.getId(), node);
-		//
-		// if (template.getOptions().getGroups().size() > 0) {
-		// final String groupId = Iterables.getFirst(template.getOptions()
-		// .getGroups(), "0");
-		//
-		// Optional<SecurityGroup> secGroup = Iterables.tryFind(
-		// // securityGroupExtension.get().listSecurityGroups(),
-		// // new Predicate<SecurityGroup>() {
-		// // @Override
-		// // public boolean apply(SecurityGroup input) {
-		// // return input.getId().equals(groupId);
-		// // }
-		// // });
-		//
-		// // if (secGroup.isPresent()) {
-		// // groupsForNodes.put(node.getId(), secGroup.get());
-		// // }
-		// }
-		// TODO Note the time/delay here ! Use an asynch "modification" we can
-		// adopt something similar: given the state transitions and the expected
-		// time ranges just execute the state machine
-		// setStateOnNodeAfterDelay(Status.RUNNING, node, 100);
-		// return new NodeWithInitialCredentials(node);
 	}
 
-	// TODO Require state definition. Not yet implemented
+	// TODO Require TIME/TIMED Specs or an executor implementatino to evolve the
+	// state
+	// somehow. Times can always be generated from the specs.
 	@Override
 	public void rebootNode(String id) {
 		// TODO Do nothing for the moment, later this will become something like
 		// running -> stop -> running
+		cloud.startNode("" + Integer.parseInt(id));
 	}
 
 	@Override
 	public void resumeNode(String id) {
-		cloud.startNode(Integer.parseInt(id));
+		cloud.startNode("" + Integer.parseInt(id));
 	}
 
 	@Override
 	public void suspendNode(String id) {
-		cloud.suspendNode(Integer.parseInt(id));
+		cloud.suspendNode("" + Integer.parseInt(id));
 	}
 
 	/**
-	 * Define the flavors of the instances
+	 * Define the flavors of the instances TODO: generative approach would be
+	 * better here !
+	 * 
+	 * We READ this BUT we DO NOT MODIFY this with the ComputeAPI !!
 	 * 
 	 * @return
 	 */
@@ -258,7 +270,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	public Iterable<Hardware> listHardwareProfiles() {
 		// This is similar to listImage
 
-		Builder<Hardware> flavors = ImmutableList.builder();
+		ImmutableList.Builder<Hardware> flavors = ImmutableList.builder();
 
 		flavors.add(new HardwareBuilder()
 				.ids("1")
@@ -290,46 +302,15 @@ public class DeclarativeStubComputeServiceAdapter implements
 		return flavors.build();
 	}
 
-	// TODO This must be replaced by specifications. Declarative creation of
-	// available images !!
+	/**
+	 * Define the available images TODO: generative approach would be better
+	 * here ! We READ this BUT we DO NOT MODIFY this with the ComputeAPI !!
+	 * 
+	 * @return
+	 */
 	@Override
 	public Iterable<Image> listImages() {
-		// initializing as a List, as ImmutableSet does not allow you to put
-		// duplicates
-		Builder<Image> images = ImmutableList.builder();
-		int id = 1;
-		for (boolean is64Bit : new boolean[] { true, false })
-			for (Entry<OsFamily, Map<String, String>> osVersions : this.osToVersionMap
-					.entrySet()) {
-
-				for (String version : ImmutableSet.copyOf(osVersions.getValue()
-						.values())) {
-
-					String desc = String.format("declarative-stub %s %s",
-							osVersions.getKey(), is64Bit);
-
-					// THIS SHOULD BE CREATED USING THE SPEC OF THE CLOUD AND A
-					// SMART PRECONDITION
-					Image image = new ImageBuilder()
-							.ids(id++ + "")
-							.name(osVersions.getKey().name())
-							.location(location.get())
-							.operatingSystem(
-									new OperatingSystem(osVersions.getKey(),
-											desc, version, null, desc, is64Bit))
-							.description(desc).status(Image.Status.AVAILABLE)
-							.build();
-
-					System.out
-							.println(" \t DeclarativeStubComputeServiceAdapter.listImages() Creating IMAGE "
-									+ image.getId()
-									+ " - "
-									+ image.getDescription());
-
-					images.add(image);
-				}
-			}
-		return images.build();
+		return cloud.getAllImages();
 	}
 
 	@Override
@@ -340,7 +321,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	@SuppressWarnings("unchecked")
 	@Override
 	public Iterable<Location> listLocations() {
-		Builder<Location> locations = ImmutableList.builder();
+		ImmutableList.Builder<Location> locations = ImmutableList.builder();
 		return locations.build();
 	}
 }
