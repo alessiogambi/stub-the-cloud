@@ -5,13 +5,13 @@ import java.util.Set;
 import org.jclouds.compute.domain.NodeMetadata;
 
 import edu.mit.csail.sdg.annotations.Ensures;
+import edu.mit.csail.sdg.annotations.FreshObjects;
 import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
+import edu.mit.csail.sdg.annotations.Options;
 import edu.mit.csail.sdg.annotations.Requires;
 import edu.mit.csail.sdg.annotations.SpecField;
 import edu.mit.csail.sdg.squander.Squander;
-import edu.mit.csail.sdg.squander.annotations.FreshObjects;
-import edu.mit.csail.sdg.squander.annotations.Options;
 
 /**
  * This abstract class contains some of the specifications of a generic cloud

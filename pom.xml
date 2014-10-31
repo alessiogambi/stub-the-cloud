@@ -54,8 +54,8 @@
 			<artifactId>mit.squander</artifactId>
 			<groupId>squander</groupId>
 			<scope>system</scope>
-			<version>1.0</version>
-			<systemPath>${basedir}/lib/squander.jar</systemPath>
+			<version>2.0</version>
+			<systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath>
 		</dependency>
 
 		<dependency>
@@ -66,12 +66,16 @@
 			<systemPath>${basedir}/lib/forge.jar</systemPath>
 		</dependency>
 
+		<!-- <dependency> <artifactId>mit.squander</artifactId> <groupId>jforge-annotations</groupId> 
+			<scope>system</scope> <version>1.0</version> <systemPath>${basedir}/lib/jforge-annotations.jar</systemPath> 
+			</dependency> -->
+
 		<dependency>
 			<artifactId>mit.squander</artifactId>
-			<groupId>jforge-annotations</groupId>
+			<groupId>jfsl-annotations</groupId>
 			<scope>system</scope>
 			<version>1.0</version>
-			<systemPath>${basedir}/lib/jforge-annotations.jar</systemPath>
+			<systemPath>${basedir}/lib/jfsl-annotations.jar</systemPath>
 		</dependency>
 
 		<dependency>
@@ -102,8 +106,8 @@
 			<artifactId>mit.squander</artifactId>
 			<groupId>sat4j</groupId>
 			<scope>system</scope>
-			<version>2.2.1</version>
-			<systemPath>${basedir}/lib/sat4j-v2.2.1.jar</systemPath>
+			<version>2.3.2</version>
+			<systemPath>${basedir}/lib/sat4j-v2.3.2.jar</systemPath>
 		</dependency>
 
 		<dependency>
