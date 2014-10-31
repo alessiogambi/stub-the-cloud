@@ -1,5 +1,5 @@
 interface NodeMetadata {
 
-    @SpecField("status : one NodeMetadata.Status")
+    @SpecField("status : one NodeMetadataStatus")
 
 }
