@@ -6,7 +6,7 @@
 		</encoder>
 	</appender>
 	<root>
-		<level value="info" />
+		<level value="DEBUG" />
 	</root>
 
 	<logger name="org.jclouds">

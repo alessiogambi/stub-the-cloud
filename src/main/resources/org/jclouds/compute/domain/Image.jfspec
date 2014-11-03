@@ -1,6 +1,5 @@
 interface Image {
 
-    @SpecField("imageID : one String")
-    @SpecField("status : one ImageStatus")
-
+	@SpecField("imageID : one String")
+	
 }

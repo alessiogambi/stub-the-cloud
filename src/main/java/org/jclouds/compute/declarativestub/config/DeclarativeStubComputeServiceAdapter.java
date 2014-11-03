@@ -165,12 +165,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 
 	@Override
 	public NodeMetadata getNode(String id) {
-		DeclarativeNode n = new DeclarativeNode();
-
-		// TODO Must be fixed from INTEGER to STRING !
-		n.setId("" + "" + Integer.parseInt(id));
-
-		DeclarativeNode abstractNode = cloud.getNode(n);
+		DeclarativeNode abstractNode = cloud.getNode(id);
 
 		NodeMetadataBuilder builder = new NodeMetadataBuilder();
 		builder.ids("" + abstractNode.getId());

@@ -33,6 +33,7 @@ public class ImageSer implements IObjSer {
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
+		System.out.println("ImageSer.absFunc() START");
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
 
@@ -43,43 +44,51 @@ public class ImageSer implements IObjSer {
 		FieldValue fvLen = new FieldValue(cls.findField(ID), 2);
 		fvLen.addTuple(new ObjTuple(obj, imageID));
 		result.add(fvLen);
-
+		System.out.println("ImageSer.absFunc() END");
 		return result;
 	}
 
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
+		System.out.println("ImageSer.concrFunc() START");
 		String fldName = fieldValue.jfield().name();
 		// TODO Check that the object is really an Image ?
-		if (ID.equals(fldName))
+		if (ID.equals(fldName)) {
 			return restoreImageID(obj, fieldValue);
-		else if (!fieldValue.jfield().isPureAbstract())
+		} else if (!fieldValue.jfield().isPureAbstract()) {
 			return obj;
-		else
+		} else {
 			throw new RuntimeException("Unknown field name for Image class: "
 					+ fldName);
+		}
 	}
 
 	// Not sure this is really ok !
 	private Object restoreImageID(Object concreteObj, FieldValue fieldValue) {
-		ObjTupleSet value = fieldValue.tupleSet();
-		assert value.arity() == 2;
+		try {
+			ObjTupleSet value = fieldValue.tupleSet();
 
-		Image image = (Image) concreteObj;
-		// Reset all the attributes
-		ImageBuilder builder = ImageBuilder.fromImage(image);
-		// Overwrite the id
-		System.out.println("ImageSer.restoreImageID() value.tuples "
-				+ value.tuples());
+			assert value.arity() == 2;
 
-		for (ObjTuple ot : value) {
-			System.out
-					.println("ImageSer.restoreImageID() ot.get(1).toString() "
-							+ ot.get(1).toString());
-			builder.id(ot.get(1).toString());
+			Image image = (Image) concreteObj;
+			// Reset all the attributes
+			ImageBuilder builder = ImageBuilder.fromImage(image);
+			// Overwrite the id
+			System.out.println("ImageSer.restoreImageID() value.tuples "
+					+ value.tuples());
+
+			for (ObjTuple ot : value) {
+				System.out
+						.println("ImageSer.restoreImageID() ot.get(1).toString() "
+								+ ot.get(1).toString());
+				builder.id(ot.get(1).toString());
+			}
+
+			return builder.build();
+		} catch (Throwable e) {
+			e.printStackTrace();
+			throw new RuntimeException("Unknown error " + e.getMessage());
 		}
-
-		return builder.build();
 
 	}
 }
