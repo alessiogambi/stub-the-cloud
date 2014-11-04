@@ -235,8 +235,7 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node must exist
 			"one vm : this.vms | vm.id == _id" })
-	// This is redundant if we use the instance selector
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = NodeMetadataStatus.RUNNING)" })
+	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)" })
 	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
 	/**
 	 * This call is idempotent
@@ -253,8 +252,7 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node must exist
 			"one vm : this.vms | vm.id == _id" })
-	// This is redundant if we use the instance selector
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = NodeMetadataStatus.SUSPENDED )" })
+	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED )" })
 	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
 	/**
 	 * This call is idempotent

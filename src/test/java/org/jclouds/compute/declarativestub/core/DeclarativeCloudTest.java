@@ -133,7 +133,6 @@ public class DeclarativeCloudTest {
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 		Assert.assertNotNull(n);
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
-
 	}
 
 	@Test
@@ -144,7 +143,6 @@ public class DeclarativeCloudTest {
 		Assert.assertNotNull(n);
 		Assert.assertNotNull(n.getImage());
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
-
 	}
 
 	@Test
@@ -358,7 +356,6 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
 				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
 
 		// Idempotence
 		cloud.suspendNode(n.getId());
@@ -378,8 +375,6 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
 				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-
 		//
 		cloud.suspendNode(n2.getId());
 		//

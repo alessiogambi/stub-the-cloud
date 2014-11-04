@@ -306,6 +306,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	@Override
 	public Iterable<Image> listImages() {
 		return cloud.getAllImages();
+
 	}
 
 	@Override

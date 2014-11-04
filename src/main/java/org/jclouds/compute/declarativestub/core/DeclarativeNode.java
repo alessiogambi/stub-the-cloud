@@ -3,18 +3,8 @@ package org.jclouds.compute.declarativestub.core;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadataStatus;
 
-import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.Invariant;
-import edu.mit.csail.sdg.annotations.SpecField;
-import edu.mit.csail.sdg.squander.Squander;
 
-@SpecField({
-/**/
-"id: one String",
-/**/
-"image : one org.jclouds.compute.domain.Image",
-/**/
-"status : one org.jclouds.compute.domain.NodeMetadataStatus" })
 @Invariant({ "this.status != null", "this.id != null", "this.image != null" })
 public class DeclarativeNode {
 
@@ -24,19 +14,31 @@ public class DeclarativeNode {
 				+ "Status: " + getStatus() + "\n";
 	}
 
-	@Ensures({ "return = this.id" })
-	public String getId() {
-		return Squander.exe(this);
+	private int id;
+	private NodeMetadataStatus status;
+	private Image image;
+
+	public int getId() {
+		return id;
 	}
 
-	@Ensures({ "return = this.image" })
-	public Image getImage() {
-		return Squander.exe(this);
+	public void setId(int id) {
+		this.id = id;
 	}
 
-	@Ensures({ "return = this.status" })
 	public NodeMetadataStatus getStatus() {
-		// return status;
-		return Squander.exe(this);
+		return status;
+	}
+
+	public void setState(NodeMetadataStatus status) {
+		this.status = status;
+	}
+
+	public Image getImage() {
+		return image;
+	}
+
+	public void setImage(Image image) {
+		this.image = image;
 	}
 }
