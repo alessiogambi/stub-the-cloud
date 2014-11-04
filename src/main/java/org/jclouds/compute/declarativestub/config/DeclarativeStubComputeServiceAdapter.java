@@ -166,7 +166,6 @@ public class DeclarativeStubComputeServiceAdapter implements
 	@Override
 	public NodeMetadata getNode(String id) {
 		DeclarativeNode abstractNode = cloud.getNode(id);
-
 		NodeMetadataBuilder builder = new NodeMetadataBuilder();
 		builder.ids("" + abstractNode.getId());
 		NodeMetadata node = builder.build();
@@ -192,7 +191,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 		// TODO Remove this eventually
 		Set<String> _ids = new HashSet<String>();
 		for (String id : ids) {
-			_ids.add("" + Integer.parseInt(id));
+			_ids.add(id);
 		}
 		ImmutableList.Builder<NodeMetadata> nodesBuilder = ImmutableList
 				.builder();
@@ -207,8 +206,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 
 	@Override
 	public void destroyNode(final String id) {
-		// TODO String -> Int ID
-		cloud.removeNode("" + Integer.parseInt(id));
+		cloud.removeNode(id);
 	}
 
 	@Override
@@ -245,12 +243,13 @@ public class DeclarativeStubComputeServiceAdapter implements
 
 	@Override
 	public void resumeNode(String id) {
-		cloud.startNode("" + Integer.parseInt(id));
+		// TODO Implement resume ?
+		cloud.startNode(id);
 	}
 
 	@Override
 	public void suspendNode(String id) {
-		cloud.suspendNode("" + Integer.parseInt(id));
+		cloud.suspendNode(id);
 	}
 
 	/**

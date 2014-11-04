@@ -356,7 +356,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
 				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-
+				NodeMetadataStatus.RUNNING);
 		// Idempotence
 		cloud.suspendNode(n.getId());
 		//
@@ -375,6 +375,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
 				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
+				NodeMetadataStatus.RUNNING);
 		//
 		cloud.suspendNode(n2.getId());
 		//

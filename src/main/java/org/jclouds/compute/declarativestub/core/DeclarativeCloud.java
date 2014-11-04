@@ -117,7 +117,6 @@ public class DeclarativeCloud {
 	@Requires("ids.elts in this.vms.id")
 	@Modifies("return.elts")
 	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
-	// TODO Iterable -> Set
 	public Set<DeclarativeNode> getNodes(Set<String> ids) {
 		return Squander.exe(this, ids);
 	}
@@ -128,42 +127,25 @@ public class DeclarativeCloud {
 	 * . Ideally should be the underlying framework to deal with that. TODO
 	 * Inject the ID provider ad done in StubClientAdapter
 	 */
-	private final static AtomicInteger id = new AtomicInteger(0);
-
-	// This is odd
-	public static String allocateNewId() {
-		return "" + id.incrementAndGet();
-	}
-
-	public DeclarativeNode createNode() {
-		String id = allocateNewId();
-		System.out
-				.println("DeclarativeCloud.createNode() Allocated ID = " + id);
-		return createNode(id);
-	}
-
 	public void addImage(Image i) {
-		addImage(i, allocateNewId());
+		addImage(i, allocateID());
 	}
-
-	/*
-	 * @
-	 */
 
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ /* At least one Image */
+	@Requires({
+	/* At least one Image */
 	"#this.images > 0",
 	/* Unique ID */
-	"nodeId ! in  this.vms.id", })
+	"nodeId ! in  @old(this.vms.id)" })
 	//
 	@Ensures({
-	/* Deploy the new node with given ID and RUNNING state */
+			/* Deploy the new node with given ID and RUNNING state */
 			// THIS ONE IS FAULTY + return?
 			"this.vms = @old(this.vms) + return",
 			/* Maintain ID */
 			"return.id = nodeId",
 			/* Start VM as RUNNING */
-			"return.status = NodeMetadataStatus.RUNNING",
+			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
 			/*
 			 * Node and Image connection: we do not care, but the image for the
 			 * new node must be one of the available one !!
@@ -181,6 +163,21 @@ public class DeclarativeCloud {
 	// @Options(ensureAllInts = true)
 	public void addImage(Image i, String _id) {
 		Squander.exe(this, i, _id);
+	}
+
+	/* NON ANNOTATED VERSION */
+	public DeclarativeNode createNode() {
+		return createNode(allocateID());
+	}
+
+	/*
+	 * Since it is not possible to create random strings we use a generative
+	 * naive approach
+	 */
+	final static private AtomicInteger currentId = new AtomicInteger();
+
+	public static String allocateID() {
+		return "" + currentId.incrementAndGet();
 	}
 
 	@Requires({
