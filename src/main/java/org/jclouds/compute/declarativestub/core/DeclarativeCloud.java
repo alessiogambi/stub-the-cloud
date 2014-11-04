@@ -1,8 +1,7 @@
 package org.jclouds.compute.declarativestub.core;
 
 import java.util.Set;
-
-import org.jclouds.compute.domain.NodeMetadataStatus;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;
@@ -69,20 +68,35 @@ public class DeclarativeCloud {
 	@Requires("ids.elts in this.vms.id")
 	@Modifies("return.elts")
 	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
-	// TODO Integer -> String, Iterable -> Set
-	public Set<DeclarativeNode> getNodes(Set<Integer> ids) {
+	public Set<DeclarativeNode> getNodes(Set<String> ids) {
 		return Squander.exe(this, ids);
 	}
 
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
+	@Requires({ "newNodeID !in @old(this.vms.id)", })
 	@Ensures({
 			"this.vms = @old(this.vms) + return",//
-			"return !in @old(this.vms)",
-			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING" })
+			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+			"return.id = newNodeID" })
 	@Modifies({ "this.vms", "return.id", "return.status" })
 	@Options(ensureAllInts = true)
+	public DeclarativeNode createNode(String newNodeID) {
+		return Squander.exe(this, newNodeID);
+	}
+
+	/* NON ANNOTATED VERSION */
 	public DeclarativeNode createNode() {
-		return Squander.exe(this);
+		return createNode(allocateID());
+	}
+
+	/*
+	 * Since it is not possible to create random strings we use a generative
+	 * naive approach
+	 */
+	final static private AtomicInteger currentId = new AtomicInteger();
+
+	public static String allocateID() {
+		return "" + currentId.incrementAndGet();
 	}
 
 	@Requires({
@@ -103,7 +117,7 @@ public class DeclarativeCloud {
 			"_id in this.vms.id" })
 	@Ensures({ "_id !in this.vms.id && #this.vms = #@old(this.vms) - 1" })
 	@Modifies({ "this.vms", })
-	public void removeNode(int _id) {
+	public void removeNode(String _id) {
 		Squander.exe(this, _id);
 	}
 
@@ -128,7 +142,7 @@ public class DeclarativeCloud {
 	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status")
 	@Modifies({ "return.id", "return.status" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	public DeclarativeNode getNode(int _id) {
+	public DeclarativeNode getNode(String _id) {
 		return Squander.exe(this, _id);
 	}
 
@@ -143,7 +157,7 @@ public class DeclarativeCloud {
 	 * This call is idempotent
 	 * @param _id
 	 */
-	public void startNode(int _id) {
+	public void startNode(String _id) {
 		// TODO: by changing the state we change the running/stopped relation,
 		// but we do not declare them as "mofiable"
 		Squander.exe(this, _id);
@@ -160,7 +174,7 @@ public class DeclarativeCloud {
 	 * This call is idempotent
 	 * @param _id
 	 */
-	public void suspendNode(int _id) {
+	public void suspendNode(String _id) {
 		Squander.exe(this, _id);
 	}
 

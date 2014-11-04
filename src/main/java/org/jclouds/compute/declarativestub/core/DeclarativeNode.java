@@ -4,17 +4,17 @@ import org.jclouds.compute.domain.NodeMetadataStatus;
 
 import edu.mit.csail.sdg.annotations.Invariant;
 
-@Invariant({ "this.status != null", "this.id != 0" })
+@Invariant({ "this.status != null", "this.id != null" })
 public class DeclarativeNode {
 
-	private int id;
+	private String id;
 	private NodeMetadataStatus status;
 
-	public int getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

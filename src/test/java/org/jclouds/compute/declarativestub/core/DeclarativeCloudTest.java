@@ -194,7 +194,7 @@ public class DeclarativeCloudTest {
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
 		// Build the input
-		Set<Integer> ids = new HashSet<Integer>();
+		Set<String> ids = new HashSet<String>();
 		ids.add(n.getId());
 		ids.add(n1.getId());
 		ids.add(n2.getId());
@@ -218,7 +218,7 @@ public class DeclarativeCloudTest {
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
 		// Build the input
-		Set<Integer> ids = new HashSet<Integer>();
+		Set<String> ids = new HashSet<String>();
 		ids.add(n.getId());
 
 		// Exec
