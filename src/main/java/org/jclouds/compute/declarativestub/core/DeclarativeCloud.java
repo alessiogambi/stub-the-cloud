@@ -2,7 +2,7 @@ package org.jclouds.compute.declarativestub.core;
 
 import java.util.Set;
 
-import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;
@@ -45,8 +45,8 @@ import edu.mit.csail.sdg.squander.Squander;
 public class DeclarativeCloud {
 
 	// For the moment this seems to work but not what I wanted :(
-	final NodeMetadata.Status runningEnumStatus = NodeMetadata.Status.RUNNING;
-	final NodeMetadata.Status suspendedEnumStatus = NodeMetadata.Status.SUSPENDED;
+	final NodeMetadataStatus runningEnumStatus = NodeMetadataStatus.RUNNING;
+	final NodeMetadataStatus suspendedEnumStatus = NodeMetadataStatus.SUSPENDED;
 
 	public DeclarativeCloud() {
 		init();

@@ -3,7 +3,7 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -36,7 +36,7 @@ public class DeclarativeCloudTest {
 		DeclarativeNode n = c.createNode();
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 		Assert.assertNotNull(n);
-		Assert.assertEquals(n.getStatus(), NodeMetadata.Status.RUNNING);
+		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
 
 	}
 
@@ -161,7 +161,7 @@ public class DeclarativeCloudTest {
 		Assert.assertTrue(_n.getId() == n.getId());
 		// Assert STATE
 		Assert.assertEquals(c.getNode(n).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 	}
 
 	@Test
@@ -174,11 +174,11 @@ public class DeclarativeCloudTest {
 		Assert.assertTrue(_n.getId() == n.getId());
 		// Assert STATE
 		Assert.assertEquals(c.getNode(n).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 	}
 
 	private boolean hasStatus(Set<DeclarativeNode> nodes, DeclarativeNode node,
-			NodeMetadata.Status status) {
+			NodeMetadataStatus status) {
 		for (DeclarativeNode n : nodes) {
 			if (node.getId() == n.getId()) {
 				return status.equals(n.getStatus());
@@ -206,9 +206,9 @@ public class DeclarativeCloudTest {
 		Assert.assertTrue(containsID(nodes, n1));
 		Assert.assertTrue(containsID(nodes, n2));
 		// Check States
-		Assert.assertTrue(hasStatus(nodes, n, NodeMetadata.Status.RUNNING));
-		Assert.assertTrue(hasStatus(nodes, n1, NodeMetadata.Status.RUNNING));
-		Assert.assertTrue(hasStatus(nodes, n2, NodeMetadata.Status.RUNNING));
+		Assert.assertTrue(hasStatus(nodes, n, NodeMetadataStatus.RUNNING));
+		Assert.assertTrue(hasStatus(nodes, n1, NodeMetadataStatus.RUNNING));
+		Assert.assertTrue(hasStatus(nodes, n2, NodeMetadataStatus.RUNNING));
 	}
 
 	@Test
@@ -242,7 +242,7 @@ public class DeclarativeCloudTest {
 		c.suspendNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 	}
 
 	@Test
@@ -257,41 +257,41 @@ public class DeclarativeCloudTest {
 		c.suspendNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 
 		// Idempotence
 		c.suspendNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 
 		//
 		c.suspendNode(n1.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 
 		//
 		c.suspendNode(n2.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 
 		System.out.println("DeclarativeCloudTest.testSuspendOnlyTheNode() "
 				+ c.getAllNodes());
@@ -304,17 +304,17 @@ public class DeclarativeCloudTest {
 		// WARNING: This test depends on the correctness of suspend !
 		c.suspendNode(n.getId());
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		// Execution
 		c.startNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		// Idempotence
 		c.startNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 	}
 
 	@Test
@@ -327,38 +327,38 @@ public class DeclarativeCloudTest {
 		// WARNING: This test depends on the correctness of suspend and get !
 		c.suspendNode(n.getId());
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 
 		// Execution
 		c.startNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		// Idempotence
 		c.startNode(n.getId());
 		//
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		// Act on the others
 		c.suspendNode(n1.getId());
 		c.suspendNode(n2.getId());
 		Assert.assertEquals(c.getNode(n.getId()).getStatus(),
-				NodeMetadata.Status.RUNNING);
+				NodeMetadataStatus.RUNNING);
 		Assert.assertEquals(c.getNode(n1.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 		Assert.assertEquals(c.getNode(n2.getId()).getStatus(),
-				NodeMetadata.Status.SUSPENDED);
+				NodeMetadataStatus.SUSPENDED);
 	}
 }

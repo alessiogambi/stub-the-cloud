@@ -18,6 +18,7 @@ import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
+import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.OperatingSystem;
@@ -317,7 +318,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 							.operatingSystem(
 									new OperatingSystem(osVersions.getKey(),
 											desc, version, null, desc, is64Bit))
-							.description(desc).status(Image.Status.AVAILABLE)
+							.description(desc).status(ImageStatus.AVAILABLE)
 							.build();
 
 					System.out
