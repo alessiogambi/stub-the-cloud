@@ -8,9 +8,7 @@ import edu.mit.csail.sdg.annotations.Invariant;
 public class DeclarativeNode {
 
 	private int id;
-	// TODO This should be the same enum used by jclouds or at least mapped to
-	// it
-	private NodeMetadataStatus status; // 0 = stop, 1 = running
+	private NodeMetadataStatus status;
 
 	public int getId() {
 		return id;
