@@ -3,6 +3,8 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jclouds.compute.domain.Image;
+
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;
 import edu.mit.csail.sdg.annotations.Invariant;
@@ -24,7 +26,9 @@ import edu.mit.csail.sdg.squander.Squander;
 /* All the VM deployed in the cloud */
 "vms : set DeclarativeNode",
 /* Running VM */
-"running : set DeclarativeNode" })
+"running : set DeclarativeNode",
+/* Disl Images */
+"images : set org.jclouds.compute.domain.Image" })
 @Invariant({//
 /* All the VM must have unique ID */
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
@@ -33,16 +37,50 @@ import edu.mit.csail.sdg.squander.Squander;
 		/* Running VM */
 		"this.running in this.vms",
 		/* This is only to avoid clsSpec ! */
-		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING" })
+		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+		/* Null is not an option for Images */
+		" null ! in this.images" })
 public class DeclarativeCloud {
 
 	public DeclarativeCloud() {
 		init();
 	}
 
-	@Ensures({ "no this.vms" })
+	public DeclarativeCloud(Set<Image> images) {
+		init(images);
+	}
+
+	/* NON ANNOTATED VERSION */
+	public DeclarativeNode createNode() {
+		return createNode(allocateID());
+	}
+
+	/*
+	 * Since it is not possible to create random strings we use a generative
+	 * naive approach
+	 */
+	final static private AtomicInteger currentId = new AtomicInteger();
+
+	public static String allocateID() {
+		return "" + currentId.incrementAndGet();
+	}
+
+	@Ensures({ "no this.vms", "no this.images" })
 	private void init() {
 		Squander.exe(this);
+	}
+
+	@Ensures({ "no this.vms", "this.images = _images.elts" })
+	@Modifies({ "this.images" })
+	private void init(Set<Image> _images) {
+		Squander.exe(this, _images);
+	}
+
+	@Ensures("return.elts == this.images")
+	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
+	@Modifies("return.elts")
+	public Set<Image> getAllImages() {
+		return Squander.exe(this);
 	}
 
 	@Ensures("return.elts == this.vms")
@@ -70,21 +108,6 @@ public class DeclarativeCloud {
 	@Options(ensureAllInts = true)
 	public DeclarativeNode createNode(String newNodeID) {
 		return Squander.exe(this, newNodeID);
-	}
-
-	/* NON ANNOTATED VERSION */
-	public DeclarativeNode createNode() {
-		return createNode(allocateID());
-	}
-
-	/*
-	 * Since it is not possible to create random strings we use a generative
-	 * naive approach
-	 */
-	final static private AtomicInteger currentId = new AtomicInteger();
-
-	public static String allocateID() {
-		return "" + currentId.incrementAndGet();
 	}
 
 	@Requires({

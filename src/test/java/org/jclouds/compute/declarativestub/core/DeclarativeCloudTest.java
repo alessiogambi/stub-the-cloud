@@ -3,9 +3,17 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jclouds.compute.domain.Image;
+import org.jclouds.compute.domain.ImageBuilder;
+import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadataStatus;
+import org.jclouds.compute.domain.OperatingSystem;
+import org.jclouds.compute.domain.OsFamily;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 
 /**
  * Testing the Specifications of a generic cloud. {@link DeclarativeCloud} must
@@ -28,6 +36,33 @@ public class DeclarativeCloudTest {
 		DeclarativeCloud c = new DeclarativeCloud();
 		System.out
 				.println("DeclarativeCloudTest.testInit() " + c.getAllNodes());
+	}
+
+	@Test
+	public void testListImagesEmptyCloud() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		System.out.println("DeclarativeCloudTest.testInit() "
+				+ c.getAllImages());
+	}
+
+	@Test
+	public void testListImages() {
+		Builder<Image> images = ImmutableSet.builder();
+		int id = 1;
+		Image image = new ImageBuilder()
+				.ids(id++ + "")
+				.name("OS-NAME")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.LINUX, "desc", "version",
+								null, "desc", false)).description("desc")
+				.status(ImageStatus.AVAILABLE).build();
+
+		images.add(image);
+		DeclarativeCloud c = new DeclarativeCloud(images.build());
+		System.out.println("DeclarativeCloudTest.testInit() "
+				+ c.getAllImages());
+		Assert.assertEquals(c.getAllImages(), images.build());
 	}
 
 	@Test

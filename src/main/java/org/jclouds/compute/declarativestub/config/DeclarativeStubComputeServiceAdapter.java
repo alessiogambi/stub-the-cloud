@@ -290,46 +290,9 @@ public class DeclarativeStubComputeServiceAdapter implements
 		return flavors.build();
 	}
 
-	// TODO This must be replaced by specifications. Declarative creation of
-	// available images !!
 	@Override
 	public Iterable<Image> listImages() {
-		// initializing as a List, as ImmutableSet does not allow you to put
-		// duplicates
-		Builder<Image> images = ImmutableList.builder();
-		int id = 1;
-		for (boolean is64Bit : new boolean[] { true, false })
-			for (Entry<OsFamily, Map<String, String>> osVersions : this.osToVersionMap
-					.entrySet()) {
-
-				for (String version : ImmutableSet.copyOf(osVersions.getValue()
-						.values())) {
-
-					String desc = String.format("declarative-stub %s %s",
-							osVersions.getKey(), is64Bit);
-
-					// THIS SHOULD BE CREATED USING THE SPEC OF THE CLOUD AND A
-					// SMART PRECONDITION
-					Image image = new ImageBuilder()
-							.ids(id++ + "")
-							.name(osVersions.getKey().name())
-							.location(location.get())
-							.operatingSystem(
-									new OperatingSystem(osVersions.getKey(),
-											desc, version, null, desc, is64Bit))
-							.description(desc).status(ImageStatus.AVAILABLE)
-							.build();
-
-					System.out
-							.println(" \t DeclarativeStubComputeServiceAdapter.listImages() Creating IMAGE "
-									+ image.getId()
-									+ " - "
-									+ image.getDescription());
-
-					images.add(image);
-				}
-			}
-		return images.build();
+		return cloud.getAllImages();
 	}
 
 	@Override
