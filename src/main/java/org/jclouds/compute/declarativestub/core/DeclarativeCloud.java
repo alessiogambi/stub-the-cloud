@@ -21,26 +21,14 @@ import edu.mit.csail.sdg.squander.Squander;
 
 // TODO Possibly the DeclarativeNode can be directly specified in here !!
 // VM with state vs relations of VM ?
-@SpecField({ "vms : set DeclarativeNode",//
-		"running : set DeclarativeNode",//
-		"stopped : set DeclarativeNode",
+@SpecField({ "vms : set DeclarativeNode"
 
 })
 @Invariant({//
 /* All the VM must have unique ID */
-		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-		/* Running Virtual Machines */
-		"this.running in this.vms",
-		/**/
-		"all vm : this.running | vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-		/* Stopped Virtual Machines */
-		"this.stopped in this.vms",
-		/**/
-		"all vm : this.stopped | vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED",
-		/* All the VM must have 1 single state */
-		" no (this.running & this.stopped)",
-		/* Null is not an option */
-		"null ! in this.vms" })
+"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+/* Null is not an option */
+"null ! in this.vms" })
 public class DeclarativeCloud {
 
 	// For the moment this seems to work but not what I wanted :(
