@@ -18,23 +18,23 @@ import edu.mit.csail.sdg.squander.Squander;
  * @author alessiogambi
  *
  */
-
-// TODO Possibly the DeclarativeNode can be directly specified in here !!
-// VM with state vs relations of VM ?
-@SpecField({ "vms : set DeclarativeNode"
-
-})
+// FIXME: if we do not provide any spec that uses NodeMetadata, this will result
+// in a clsSpec == null !
+@SpecField({
+/* All the VM deployed in the cloud */
+"vms : set DeclarativeNode",
+/* Running VM */
+"running : set DeclarativeNode" })
 @Invariant({//
 /* All the VM must have unique ID */
-"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-/* Null is not an option */
-"null ! in this.vms" })
+		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+		/* Null is not an option */
+		"null ! in this.vms",
+		/* Running VM */
+		"this.running in this.vms",
+		/* This is only to avoid clsSpec ! */
+		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING" })
 public class DeclarativeCloud {
-
-	// For the moment this seems to work but not what I wanted :(
-	// final NodeMetadataStatus runningEnumStatus = NodeMetadataStatus.RUNNING;
-	// final NodeMetadataStatus suspendedEnumStatus =
-	// NodeMetadataStatus.SUSPENDED;
 
 	public DeclarativeCloud() {
 		init();
