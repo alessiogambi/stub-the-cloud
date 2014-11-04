@@ -20,33 +20,14 @@ import edu.mit.csail.sdg.squander.Squander;
  *
  */
 
-// TODO Possibly the DeclarativeNode can be directly specified in here !!
-// VM with state vs relations of VM ?
-@SpecField({ "vms : set DeclarativeNode",//
-		"running : set DeclarativeNode",//
-		"stopped : set DeclarativeNode",
-
-})
+// Why is this a spec field in the first place ?!
+@SpecField({ "vms : set DeclarativeNode" })
 @Invariant({//
 /* All the VM must have unique ID */
 "all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-/* Running Virtual Machines */
-"this.running in this.vms",
-/**/
-"all vm : this.running | vm.status = this.runningEnumStatus",
-/* Stopped Virtual Machines */
-"this.stopped in this.vms",
-/**/
-"all vm : this.stopped | vm.status = this.suspendedEnumStatus",
-/* All the VM must have 1 single state */
-" no (this.running & this.stopped)",
 /* Null is not an option */
 "null ! in this.vms" })
 public class DeclarativeCloud {
-
-	// For the moment this seems to work but not what I wanted :(
-	final NodeMetadataStatus runningEnumStatus = NodeMetadataStatus.RUNNING;
-	final NodeMetadataStatus suspendedEnumStatus = NodeMetadataStatus.SUSPENDED;
 
 	public DeclarativeCloud() {
 		init();
@@ -77,7 +58,7 @@ public class DeclarativeCloud {
 	@Ensures({
 			"this.vms = @old(this.vms) + return",//
 			"return !in @old(this.vms)",
-			"return.status = this.runningEnumStatus" })
+			"return.status = NodeMetadataStatus.RUNNING" })
 	@Modifies({ "this.vms", "return.id", "return.status" })
 	@Options(ensureAllInts = true)
 	public DeclarativeNode createNode() {
@@ -136,7 +117,7 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node to start must be in the available nodes
 			"one vm : this.vms | vm.id == _id" })
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = this.runningEnumStatus)" })
+	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = NodeMetadataStatus.RUNNING)" })
 	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
 	/**
 	 * This call is idempotent
@@ -153,7 +134,7 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node to start must be in the available nodes
 			"one vm : this.vms | vm.id == _id" })
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = this.suspendedEnumStatus )" })
+	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status = NodeMetadataStatus.SUSPENDED )" })
 	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
 	/**
 	 * This call is idempotent
