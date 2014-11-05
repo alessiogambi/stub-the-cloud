@@ -28,43 +28,28 @@ import edu.mit.csail.sdg.squander.Squander;
  * @author alessiogambi
  *
  */
-/* All the IMAGES must have unique ID ==> No Solution */
-// "all imageA : this.images | all imageB : this.images - imageA | imageA.imageID != imageB.imageID",
-
-/* Running Virtual Machines */
-// "this.running in this.vms",
-/**/
-// "all vm : this.running | vm.status = NodeMetadataStatus.RUNNING",
-/* Stopped Virtual Machines */
-// "this.stopped in this.vms",
-/**/
-// "all vm : this.stopped | vm.status = NodeMetadataStatus.SUSPENDED",
-/* All the VM must have 1 single state */
-// " no (this.running & this.stopped)",
-/* The subset of running virtual machine */
-// "running : set DeclarativeNode",
-/* The subset of suspended/stopped virtual machine */
-// "stopped : set DeclarativeNode",
-
+// FIXME: if we do not provide any spec that uses NodeMetadata, this will result
+// in a clsSpec == null !
 @SpecField({
-/*
- * The set of deployed virtual machine
- */
+/* All the VM deployed in the cloud */
 "vms : set DeclarativeNode",
-/*
- * IMAGE. Use the fully qualified name of the Interface here !!
- */
+/* Running VM */
+"running : set DeclarativeNode",
+/* Disk Images */
 "images : set org.jclouds.compute.domain.Image" })
-//
-@Invariant({
+@Invariant({//
 /* All the VM must have unique ID */
-"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-/* Null is not an option */
-"null ! in this.vms",
-/* Null is not an option */
-"null ! in this.images"
-
-})
+		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+		/* Null is not an option for Virtual Machines */
+		// "null !in this.vms",
+		"no (null & this.vms)",
+		/* Running VM */
+		"this.running in this.vms",
+		/* This is only to avoid clsSpec ! */
+		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+		/* Null is not an option for Images */
+		// " null !in this.images"
+		"no (null & this.images)" })
 public class DeclarativeCloud {
 
 	public String toString() {
@@ -72,97 +57,12 @@ public class DeclarativeCloud {
 				+ this.getAllNodes() + "\n";
 	}
 
-	public DeclarativeCloud() {
-		clearImages();
-		clearVirtualMachines();
-	}
-
 	public DeclarativeCloud(Set<Image> images) {
-		initImages(images);
-		clearVirtualMachines();
+		init(images);
 	}
 
-	@Ensures({ /* Initialize this.images with the provided images */
-	"_images.elts in this.images" })
-	@Modifies({ "this.images" })
-	private void initImages(Set<Image> _images) {
-		Squander.exe(this, _images);
-	}
-
-	@Ensures({ "no this.images" })
-	private void clearImages() {
-		Squander.exe(this);
-	}
-
-	@Ensures({ "no this.vms" })
-	private void clearVirtualMachines() {
-		Squander.exe(this);
-	}
-
-	@Ensures("return.elts == this.vms")
-	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<DeclarativeNode> getAllNodes() {
-		return Squander.exe(this);
-	}
-
-	@Ensures("return.elts == this.images")
-	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<Image> getAllImages() {
-		return Squander.exe(this);
-	}
-
-	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
-	@Requires("ids.elts in this.vms.id")
-	@Modifies("return.elts")
-	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
-	public Set<DeclarativeNode> getNodes(Set<String> ids) {
-		return Squander.exe(this, ids);
-	}
-
-	/*
-	 * @ Generate an Unique ID for this cloud via a stupid Factory method. Cloud
-	 * specific ways of generating ID (e.g. Random UUID) must be encoded somehow
-	 * . Ideally should be the underlying framework to deal with that. TODO
-	 * Inject the ID provider ad done in StubClientAdapter
-	 */
-	public void addImage(Image i) {
-		addImage(i, allocateID());
-	}
-
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({
-	/* At least one Image */
-	"#this.images > 0",
-	/* Unique ID */
-	"nodeId ! in  @old(this.vms.id)" })
-	//
-	@Ensures({
-			/* Deploy the new node with given ID and RUNNING state */
-			// THIS ONE IS FAULTY + return?
-			"this.vms = @old(this.vms) + return",
-			/* Maintain ID */
-			"return.id = nodeId",
-			/* Start VM as RUNNING */
-			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-			/*
-			 * Node and Image connection: we do not care, but the image for the
-			 * new node must be one of the available one !!
-			 */
-			"return.image in this.images" })
-	@Modifies({ "this.vms", "return.id", "return.image", "return.status" })
-	@Options(ensureAllInts = true, solveAll = true, bitwidth = 8)
-	public DeclarativeNode createNode(String nodeId) {
-		return Squander.exe(this, nodeId);
-	}
-
-	@Ensures({ "this.images = @old(this.images) + i",//
-			"i.imageID = _id" })
-	@Modifies({ "this.images", "i.imageID" })
-	// @Options(ensureAllInts = true)
-	public void addImage(Image i, String _id) {
-		Squander.exe(this, i, _id);
+	public DeclarativeCloud() {
+		init();
 	}
 
 	/* NON ANNOTATED VERSION */
@@ -178,6 +78,63 @@ public class DeclarativeCloud {
 
 	public static String allocateID() {
 		return "" + currentId.incrementAndGet();
+	}
+
+	// @Ensures({ "#this.vms = 0", "#this.images = 0" })
+	@Ensures({ "no this.vms", "no this.images" })
+	@Modifies({ "this.vms", "this.images" })
+	private void init() {
+		Squander.exe(this);
+	}
+
+	@Requires({ "null ! in _images.elts" })
+	@Ensures({ "no this.vms", "this.images = _images.elts" })
+	@Modifies({ "this.vms", "this.images" })
+	private void init(Set<Image> _images) {
+		Squander.exe(this, _images);
+	}
+
+	@Ensures("return.elts == this.images")
+	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
+	@Modifies("return.elts")
+	public Set<Image> getAllImages() {
+		return Squander.exe(this);
+	}
+
+	@Ensures("return.elts == this.vms")
+	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
+	@Modifies("return.elts")
+	public Set<DeclarativeNode> getAllNodes() {
+		return Squander.exe(this);
+	}
+
+	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
+	@Requires("ids.elts in this.vms.id")
+	@Modifies("return.elts")
+	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
+	public Set<DeclarativeNode> getNodes(Set<String> ids) {
+		return Squander.exe(this, ids);
+	}
+
+	@FreshObjects(cls = DeclarativeNode.class, num = 1)
+	@Requires({ "newNodeID !in @old(this.vms.id)", "#this.images > 0" })
+	@Ensures({
+			/* Deploy the new node with given ID and RUNNING state */
+			// THIS ONE IS FAULTY + return?
+			"this.vms = @old(this.vms) + return",
+			/* Maintain ID */
+			"return.id = newNodeID",
+			/* Start VM as RUNNING */
+			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+			/*
+			 * Node and Image connection: we do not care, but the image for the
+			 * new node must be one of the available one !!
+			 */
+			"return.image in this.images" })
+	@Modifies({ "this.vms", "return.id", "return.image", "return.status" })
+	@Options(ensureAllInts = true, solveAll = true, bitwidth = 8)
+	public DeclarativeNode createNode(String newNodeID) {
+		return Squander.exe(this, newNodeID);
 	}
 
 	@Requires({
@@ -207,8 +164,8 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node to stop must be in the running nodes
 			"node.id in this.vms.id" })
-	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status")
-	@Modifies({ "return.id", "return.status" })
+	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image")
+	@Modifies({ "return.id", "return.status", "return.image" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(DeclarativeNode node) {
 		return Squander.exe(this, node);
@@ -220,8 +177,8 @@ public class DeclarativeCloud {
 			// The node must be in the running nodes
 			"return.id in this.vms.id" })
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status")
-	@Modifies({ "return.id", "return.status" })
+	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image")
+	@Modifies({ "return.id", "return.status", "return.image" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id) {
 		return Squander.exe(this, _id);
@@ -259,4 +216,17 @@ public class DeclarativeCloud {
 		Squander.exe(this, _id);
 	}
 
+	/*
+	 * IMAGE MANAGEMENT: not required for "pure" ComputeService scenario
+	 */
+	public void addImage(Image i) {
+		addImage(i, allocateID());
+	}
+
+	@Ensures({ "this.images = @old(this.images) + i",//
+			"i.imageID = _id" })
+	@Modifies({ "this.images", "i.imageID" })
+	public void addImage(Image i, String _id) {
+		Squander.exe(this, i, _id);
+	}
 }

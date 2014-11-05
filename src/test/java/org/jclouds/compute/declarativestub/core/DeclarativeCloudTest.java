@@ -26,66 +26,14 @@ import com.google.common.collect.ImmutableSet.Builder;
  */
 public class DeclarativeCloudTest {
 
-	// Test Driver
-	private Set<Image> availableImages;
-	// SUT
+	/*
+	 * SUT
+	 */
 	DeclarativeCloud cloud;
 
 	@BeforeMethod
-	public void createImageInstances() {
-		// Create fake images, note that this would be better to do with
-		// assumptions !
-		Builder<Image> images = ImmutableSet.<Image> builder();
-		int id = 1;
-
-		Image image = new ImageBuilder()
-				.ids("FakeImage-" + id++)
-				.name("testImage-" + id)
-				// OperatingSystem is Mandatory
-				.operatingSystem(
-						new OperatingSystem(OsFamily.LINUX, "OsFamily.LINUX",
-								"version", null, "desc", false))
-				.description("desc")
-				// Status is mandatory
-				.status(ImageStatus.AVAILABLE)
-				//
-				.build();
-
-		images.add(image);
-
-		// image = new ImageBuilder()
-		// .ids("FakeImage-" + id++)
-		// .name("testImage-" + id)
-		// // OperatingSystem is Mandatory
-		// .operatingSystem(
-		// new OperatingSystem(OsFamily.CENTOS, "OsFamily.CENTOS",
-		// "version", null, "desc", false))
-		// .description("desc")
-		// // Status is mandatory
-		// .status(ImageStatus.AVAILABLE)
-		// //
-		// .build();
-		//
-		// images.add(image);
-		//
-		// image = new ImageBuilder().ids("FakeImage-" + id++)
-		// .name("testImage-" + id)
-		// // OperatingSystem is Mandatory
-		// .operatingSystem(
-		// new OperatingSystem(OsFamily.WINDOWS,
-		// "OsFamily.WINDOWS", "version", null, "desc",
-		// false)).description("desc")
-		// // Status is mandatory
-		// .status(ImageStatus.AVAILABLE)
-		// //
-		// .build();
-		//
-		// images.add(image);
-
-		availableImages = images.build();
-
-		// By default use this one, overwrite when necessary
-		cloud = new DeclarativeCloud(availableImages);
+	public void initializeCloud() {
+		cloud = new DeclarativeCloud(createDefaultImagesForTest());
 	}
 
 	@Test
@@ -97,7 +45,8 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testInitWithImages() {
 		System.out.println("DeclarativeCloudTest.testInit() " + cloud);
-		Assert.assertEquals(cloud.getAllImages().size(), availableImages.size());
+		Assert.assertEquals(cloud.getAllImages().size(), this
+				.createDefaultImagesForTest().size());
 	}
 
 	@Test
@@ -116,20 +65,96 @@ public class DeclarativeCloudTest {
 		} catch (RuntimeException e) {
 			Assert.assertTrue(e.getMessage().contains("pre-condition"));
 		}
+	}
+
+	public void testListImagesEmptyCloud() {
+		DeclarativeCloud c = new DeclarativeCloud();
+		System.out.println("DeclarativeCloudTest.testInit() "
+				+ c.getAllImages());
+	}
+
+	@Test
+	public void testListImages() {
+		Builder<Image> images = ImmutableSet.builder();
+		int id = 1;
+		Image image = new ImageBuilder()
+				.ids(id++ + "")
+				.name("OS-NAME")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.LINUX, "desc", "version",
+								null, "desc", false)).description("desc")
+				.status(ImageStatus.AVAILABLE).build();
+
+		images.add(image);
+		DeclarativeCloud c = new DeclarativeCloud(images.build());
+		System.out.println("DeclarativeCloudTest.testInit() "
+				+ c.getAllImages());
+		Assert.assertEquals(c.getAllImages(), images.build());
+	}
+
+	private Set<Image> createDefaultImagesForTest() {
+		Builder<Image> images = ImmutableSet.builder();
+		int id = 1;
+		Image image = new ImageBuilder()
+				.ids(id++ + "")
+				.name("OS-NAME")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.LINUX, "desc", "version",
+								null, "desc", false)).description("desc")
+				.status(ImageStatus.AVAILABLE).build();
+
+		images.add(image);
+
+		image = new ImageBuilder()
+				.ids(id++ + "")
+				.name("OS-NAME")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.WINDOWS, "desc",
+								"version", null, "desc", true))
+				.description("desc").status(ImageStatus.AVAILABLE).build();
+
+		images.add(image);
+		return images.build();
+	}
+
+	@Test
+	public void testFailCreateNodeIfNoImages() {
+		try {
+			DeclarativeCloud c = new DeclarativeCloud();
+			DeclarativeNode n = c.createNode();
+			System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
+			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");
+		} catch (RuntimeException e) {
+			Assert.assertTrue(e.getMessage().contains(
+					"pre-condition is not satisfied"));
+		}
 
 	}
 
 	@Test
 	public void testCreateNodeWithImage() {
 		// Only one image
-		cloud = new DeclarativeCloud(ImmutableSet.<Image> builder()
-				.add(availableImages.iterator().next()).build());
+
+		Image image = createDefaultImagesForTest().iterator().next();
+
+		cloud = new DeclarativeCloud(ImmutableSet.<Image> builder().add(image)
+				.build());
 
 		Assert.assertEquals(cloud.getAllImages().size(), 1);
 
 		// Exec
 		DeclarativeNode n = cloud.createNode();
-		//
+		Assert.assertNotNull(n);
+		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
+		// NOT SURE THE EQUALS IS FINE !
+		Assert.assertEquals(n.getImage(), image);
+	}
+
+	public void testCreateNode() {
+		DeclarativeNode n = cloud.createNode();
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 		Assert.assertNotNull(n);
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
@@ -159,8 +184,8 @@ public class DeclarativeCloudTest {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();
 
-		System.out.println("DeclarativeCloudTest.testAddNodes() Nodes: \n" + n
-				+ "\n" + n1);
+		System.out.println("DeclarativeCloudTest.testAddNodes() Node 1: " + n);
+		System.out.println("DeclarativeCloudTest.testAddNodes() Node 2: " + n1);
 	}
 
 	@Test
@@ -184,6 +209,13 @@ public class DeclarativeCloudTest {
 		Assert.assertTrue(nodes.size() == 0);
 	}
 
+	/**
+	 * Test Utility method
+	 * 
+	 * @param nodes
+	 * @param node
+	 * @return
+	 */
 	private boolean containsID(Set<DeclarativeNode> nodes, DeclarativeNode node) {
 		for (DeclarativeNode n : nodes) {
 			if (node.getId() == n.getId()) {
