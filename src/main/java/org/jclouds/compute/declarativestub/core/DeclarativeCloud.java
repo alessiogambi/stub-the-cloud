@@ -148,8 +148,11 @@ public class DeclarativeCloud {
 		return Squander.exe(this, ids);
 	}
 
+	// TODO THis implementation does not force a specific image nor location, it
+	// is under spec to simplify the development !
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ "newNodeID !in @old(this.vms.id)", "#this.images > 0" })
+	@Requires({ "newNodeID !in @old(this.vms.id)", "#this.images > 0",
+			"#this.flavors > 0", "#this.locations > 0" })
 	@Ensures({
 			/* Deploy the new node with given ID and RUNNING state */
 			// THIS ONE IS FAULTY + return?
@@ -162,8 +165,13 @@ public class DeclarativeCloud {
 			 * Node and Image connection: we do not care, but the image for the
 			 * new node must be one of the available one !!
 			 */
-			"return.image in this.images" })
-	@Modifies({ "this.vms", "return.id", "return.image", "return.status" })
+			"return.image in this.images",
+			/*
+			 * Pick one location
+			 */
+			"return.location in this.locations" })
+	@Modifies({ "this.vms", //
+			"return.id", "return.image", "return.status", "return.location" })
 	@Options(ensureAllInts = true, solveAll = true, bitwidth = 8)
 	public DeclarativeNode createNode(String newNodeID) {
 		return Squander.exe(this, newNodeID);
@@ -196,8 +204,8 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node to stop must be in the running nodes
 			"node.id in this.vms.id" })
-	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image")
-	@Modifies({ "return.id", "return.status", "return.image" })
+	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
+	@Modifies({ "return.id", "return.status", "return.image", "return.location" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(DeclarativeNode node) {
 		return Squander.exe(this, node);
@@ -209,8 +217,8 @@ public class DeclarativeCloud {
 			// The node must be in the running nodes
 			"return.id in this.vms.id" })
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image")
-	@Modifies({ "return.id", "return.status", "return.image" })
+	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
+	@Modifies({ "return.id", "return.status", "return.image", "return.location" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id) {
 		return Squander.exe(this, _id);
@@ -220,7 +228,7 @@ public class DeclarativeCloud {
 	// FIXME To create instances od Image we need to provide a ImageSer !
 	@Requires({
 			// At least one VM
-			"some this.images",
+			"#this.images > 0",
 			// The node must be in the running nodes
 			"return.id in this.images.id" })
 	@Ensures("return in this.images && return.id = _id")

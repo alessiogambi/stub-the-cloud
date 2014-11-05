@@ -1,4 +1,4 @@
-interface Image {
+interface Location {
 
 	@SpecField("id : one String")
 	

@@ -254,6 +254,9 @@ public class DeclarativeStubComputeServiceAdapter implements
 	public NodeWithInitialCredentials createNodeWithGroupEncodedIntoName(
 			String group, String name, Template template) {
 
+		// TODO Introduce Location here
+		// NOTE: Here we let the cloud to pick up one location, image, hardware
+		// for us
 		DeclarativeNode abstractNode = cloud.createNode();
 
 		NodeMetadataBuilder builder = new NodeMetadataBuilder();
@@ -261,6 +264,9 @@ public class DeclarativeStubComputeServiceAdapter implements
 		// TODO Shortcircuit then add name/group in the spec if needed
 		builder.name(name);
 		builder.group(group);
+		// Relations with other Concepts
+		builder.imageId(template.getImage().getId());
+		builder.location(template.getLocation());
 		// Not even sure what this is about !
 		builder.credentials(LoginCredentials.builder().user("root")
 				.password("id").build());
