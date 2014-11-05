@@ -10,6 +10,7 @@ import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.OperatingSystem;
 import org.jclouds.compute.domain.OsFamily;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableSet;
@@ -24,6 +25,16 @@ import com.google.common.collect.ImmutableSet.Builder;
  *
  */
 public class DeclarativeCloudTest {
+
+	/**
+	 * SUT
+	 */
+	DeclarativeCloud c;
+
+	@BeforeMethod
+	public void initializeCloud() {
+		c = new DeclarativeCloud(createDefaultImagesForTest());
+	}
 
 	@Test
 	public void testInit() {
@@ -65,9 +76,49 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(c.getAllImages(), images.build());
 	}
 
+	private Set<Image> createDefaultImagesForTest() {
+		Builder<Image> images = ImmutableSet.builder();
+		int id = 1;
+		Image image = new ImageBuilder()
+				.ids(id++ + "")
+				.name("OS-NAME")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.LINUX, "desc", "version",
+								null, "desc", false)).description("desc")
+				.status(ImageStatus.AVAILABLE).build();
+
+		images.add(image);
+
+		image = new ImageBuilder()
+				.ids(id++ + "")
+				.name("OS-NAME")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.WINDOWS, "desc",
+								"version", null, "desc", true))
+				.description("desc").status(ImageStatus.AVAILABLE).build();
+
+		images.add(image);
+		return images.build();
+	}
+
+	@Test
+	public void testFailCreateNodeIfNoImages() {
+		try {
+			DeclarativeCloud c = new DeclarativeCloud();
+			DeclarativeNode n = c.createNode();
+			System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
+			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");
+		} catch (RuntimeException e) {
+			Assert.assertTrue(e.getMessage().contains(
+					"pre-condition is not satisfied"));
+		}
+
+	}
+
 	@Test
 	public void testCreateNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 		Assert.assertNotNull(n);
@@ -77,7 +128,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testCreateAndListNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		c.createNode();
 		Set<DeclarativeNode> nodes = c.getAllNodes();
 		System.out.println("DeclarativeCloudTest.testAddAndListNode() Nodes "
@@ -87,7 +137,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testCreateNodes() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		System.out.println("DeclarativeCloudTest.testAddNodes() Node 1: " + n);
@@ -96,7 +145,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testRemoveNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		c.removeNode(n);
 		Set<DeclarativeNode> nodes = c.getAllNodes();
@@ -107,7 +155,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testRemoveNodeByID() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		c.removeNode(n.getId());
 		Set<DeclarativeNode> nodes = c.getAllNodes();
@@ -127,7 +174,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testRemoveNodes() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
@@ -162,7 +208,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testRemoveNodesByID() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
@@ -188,7 +233,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testGetNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		// Return the right node
 		DeclarativeNode _n = c.getNode(n);
@@ -201,7 +245,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testGetNodeByID() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		// Return the right node
 		DeclarativeNode _n = c.getNode(n);
@@ -224,7 +267,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testGetNodesByID() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
@@ -248,7 +290,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testGetNodeBySetID() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
@@ -271,7 +312,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testSuspendNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		//
 		c.suspendNode(n.getId());
@@ -284,7 +324,6 @@ public class DeclarativeCloudTest {
 	public void testSuspendOnlyTheNode() {
 		// WARNING: This test depends on the correctness of getNode!
 
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();
@@ -334,7 +373,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testStartSuspendNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		// WARNING: This test depends on the correctness of suspend !
 		c.suspendNode(n.getId());
@@ -354,7 +392,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testStartOnlyTheSuspendNode() {
-		DeclarativeCloud c = new DeclarativeCloud();
 		DeclarativeNode n = c.createNode();
 		DeclarativeNode n1 = c.createNode();
 		DeclarativeNode n2 = c.createNode();

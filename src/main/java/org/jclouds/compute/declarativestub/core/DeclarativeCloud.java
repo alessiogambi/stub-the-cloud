@@ -27,19 +27,21 @@ import edu.mit.csail.sdg.squander.Squander;
 "vms : set DeclarativeNode",
 /* Running VM */
 "running : set DeclarativeNode",
-/* Disl Images */
+/* Disk Images */
 "images : set org.jclouds.compute.domain.Image" })
 @Invariant({//
 /* All the VM must have unique ID */
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-		/* Null is not an option */
-		"null ! in this.vms",
+		/* Null is not an option for Virtual Machines */
+		// "null !in this.vms",
+		"no (null & this.vms)",
 		/* Running VM */
 		"this.running in this.vms",
 		/* This is only to avoid clsSpec ! */
 		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
 		/* Null is not an option for Images */
-		" null ! in this.images" })
+		// " null !in this.images"
+		"no (null & this.images)" })
 public class DeclarativeCloud {
 
 	public DeclarativeCloud() {
@@ -65,13 +67,16 @@ public class DeclarativeCloud {
 		return "" + currentId.incrementAndGet();
 	}
 
+	// @Ensures({ "#this.vms = 0", "#this.images = 0" })
 	@Ensures({ "no this.vms", "no this.images" })
+	@Modifies({ "this.vms", "this.images" })
 	private void init() {
 		Squander.exe(this);
 	}
 
+	@Requires({ "null ! in _images.elts" })
 	@Ensures({ "no this.vms", "this.images = _images.elts" })
-	@Modifies({ "this.images" })
+	@Modifies({ "this.vms", "this.images" })
 	private void init(Set<Image> _images) {
 		Squander.exe(this, _images);
 	}
@@ -99,13 +104,15 @@ public class DeclarativeCloud {
 	}
 
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ "newNodeID !in @old(this.vms.id)", })
+	@Requires({ "newNodeID !in @old(this.vms.id)", "#this.images > 0" })
 	@Ensures({
 			"this.vms = @old(this.vms) + return",//
 			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-			"return.id = newNodeID" })
-	@Modifies({ "this.vms", "return.id", "return.status" })
-	@Options(ensureAllInts = true)
+			"return.id = newNodeID",
+			//
+			"return.image in this.images" })
+	@Modifies({ "this.vms", "return.id", "return.status", "return.image" })
+	// @Options(ensureAllInts = true)
 	public DeclarativeNode createNode(String newNodeID) {
 		return Squander.exe(this, newNodeID);
 	}
@@ -137,8 +144,8 @@ public class DeclarativeCloud {
 			"some this.vms",
 			// The node to stop must be in the running nodes
 			"node.id in this.vms.id" })
-	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status")
-	@Modifies({ "return.id", "return.status" })
+	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image")
+	@Modifies({ "return.id", "return.status", "return.image" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(DeclarativeNode node) {
 		return Squander.exe(this, node);
@@ -150,8 +157,8 @@ public class DeclarativeCloud {
 			// The node must be in the running nodes
 			"return.id in this.vms.id" })
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status")
-	@Modifies({ "return.id", "return.status" })
+	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image")
+	@Modifies({ "return.id", "return.status", "return.image" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id) {
 		return Squander.exe(this, _id);
