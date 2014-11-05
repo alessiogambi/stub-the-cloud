@@ -116,7 +116,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 			 */
 			Map<OsFamily, Map<String, String>> osToVersionMap) {
 		//
-		cloud = new DeclarativeCloud(provideImages());
+		cloud = new DeclarativeCloud(provideImages(), provideHardware());
 
 		this.location = location;
 		this.osToVersionMap = osToVersionMap;
@@ -161,6 +161,41 @@ public class DeclarativeStubComputeServiceAdapter implements
 				}
 			}
 		return images.build();
+	}
+
+	private Set<Hardware> provideHardware() {
+		// This is similar to listImage
+
+		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
+
+		flavors.add(new HardwareBuilder()
+				.ids("1")
+				.name("small")
+				.processors(ImmutableList.of(new Processor(1, 1.0)))
+				.ram(1740)
+				.volumes(
+						ImmutableList.<Volume> of(new VolumeImpl((float) 160,
+								true, false))).build());
+
+		flavors.add(new HardwareBuilder()
+				.ids("2")
+				.name("medium")
+				.processors(ImmutableList.of(new Processor(4, 1.0)))
+				.ram(7680)
+				.volumes(
+						ImmutableList.<Volume> of(new VolumeImpl((float) 850,
+								true, false))).build());
+
+		flavors.add(new HardwareBuilder()
+				.ids("3")
+				.name("large")
+				.processors(ImmutableList.of(new Processor(8, 1.0)))
+				.ram(15360)
+				.volumes(
+						ImmutableList.<Volume> of(new VolumeImpl((float) 1690,
+								true, false))).build());
+
+		return flavors.build();
 	}
 
 	@Override
@@ -238,7 +273,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	public void rebootNode(String id) {
 		// TODO Do nothing for the moment, later this will become something like
 		// running -> stop -> running
-		cloud.startNode("" + Integer.parseInt(id));
+		cloud.startNode(id);
 	}
 
 	@Override
@@ -262,38 +297,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	 */
 	@Override
 	public Iterable<Hardware> listHardwareProfiles() {
-		// This is similar to listImage
-
-		ImmutableList.Builder<Hardware> flavors = ImmutableList.builder();
-
-		flavors.add(new HardwareBuilder()
-				.ids("1")
-				.name("small")
-				.processors(ImmutableList.of(new Processor(1, 1.0)))
-				.ram(1740)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl((float) 160,
-								true, false))).build());
-
-		flavors.add(new HardwareBuilder()
-				.ids("2")
-				.name("medium")
-				.processors(ImmutableList.of(new Processor(4, 1.0)))
-				.ram(7680)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl((float) 850,
-								true, false))).build());
-
-		flavors.add(new HardwareBuilder()
-				.ids("3")
-				.name("large")
-				.processors(ImmutableList.of(new Processor(8, 1.0)))
-				.ram(15360)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl((float) 1690,
-								true, false))).build());
-
-		return flavors.build();
+		return cloud.getAllFlavors();
 	}
 
 	/**

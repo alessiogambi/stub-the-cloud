@@ -3,16 +3,22 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.jclouds.compute.domain.Hardware;
+import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.OperatingSystem;
 import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.compute.domain.Processor;
+import org.jclouds.compute.domain.Volume;
+import org.jclouds.compute.domain.internal.VolumeImpl;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
@@ -33,7 +39,8 @@ public class DeclarativeCloudTest {
 
 	@BeforeMethod
 	public void initializeCloud() {
-		cloud = new DeclarativeCloud(createDefaultImagesForTest());
+		cloud = new DeclarativeCloud(createDefaultImagesForTest(),
+				createDefaultFlavorsForTest());
 	}
 
 	@Test
@@ -75,22 +82,16 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testListImages() {
-		Builder<Image> images = ImmutableSet.builder();
-		int id = 1;
-		Image image = new ImageBuilder()
-				.ids(id++ + "")
-				.name("OS-NAME")
-				.location(null)
-				.operatingSystem(
-						new OperatingSystem(OsFamily.LINUX, "desc", "version",
-								null, "desc", false)).description("desc")
-				.status(ImageStatus.AVAILABLE).build();
+		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest());
+	}
 
-		images.add(image);
-		DeclarativeCloud c = new DeclarativeCloud(images.build());
-		System.out.println("DeclarativeCloudTest.testInit() "
-				+ c.getAllImages());
-		Assert.assertEquals(c.getAllImages(), images.build());
+	@Test
+	public void testListFlavors() {
+		System.out.println("DeclarativeCloudTest.testListFlavors() "
+				+ cloud.getAllFlavors());
+
+		Assert.assertEquals(cloud.getAllFlavors(),
+				createDefaultFlavorsForTest());
 	}
 
 	private Set<Image> createDefaultImagesForTest() {
@@ -120,6 +121,40 @@ public class DeclarativeCloudTest {
 		return images.build();
 	}
 
+	private Set<Hardware> createDefaultFlavorsForTest() {
+		int id = 1;
+		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
+
+		flavors.add(new HardwareBuilder()
+				.ids("" + id)
+				.name("small")
+				.processors(ImmutableList.of(new Processor(1, 1.0)))
+				.ram(1740)
+				.volumes(
+						ImmutableList.<Volume> of(new VolumeImpl((float) 160,
+								true, false))).build());
+
+		flavors.add(new HardwareBuilder()
+				.ids("" + id++)
+				.name("medium")
+				.processors(ImmutableList.of(new Processor(4, 1.0)))
+				.ram(7680)
+				.volumes(
+						ImmutableList.<Volume> of(new VolumeImpl((float) 850,
+								true, false))).build());
+
+		flavors.add(new HardwareBuilder()
+				.ids("" + id++)
+				.name("large")
+				.processors(ImmutableList.of(new Processor(8, 1.0)))
+				.ram(15360)
+				.volumes(
+						ImmutableList.<Volume> of(new VolumeImpl((float) 1690,
+								true, false))).build());
+
+		return flavors.build();
+	}
+
 	@Test
 	public void testFailCreateNodeIfNoImages() {
 		try {
@@ -139,9 +174,9 @@ public class DeclarativeCloudTest {
 		// Only one image
 
 		Image image = createDefaultImagesForTest().iterator().next();
-
+		Hardware flavor = createDefaultFlavorsForTest().iterator().next();
 		cloud = new DeclarativeCloud(ImmutableSet.<Image> builder().add(image)
-				.build());
+				.build(), ImmutableSet.<Hardware> builder().add(flavor).build());
 
 		Assert.assertEquals(cloud.getAllImages().size(), 1);
 

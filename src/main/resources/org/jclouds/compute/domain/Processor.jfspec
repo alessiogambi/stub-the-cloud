@@ -1,0 +1,6 @@
+interface Processor {
+
+	@SpecField("cores : one int")
+	@SpecField("speed : one int")
+	
+}

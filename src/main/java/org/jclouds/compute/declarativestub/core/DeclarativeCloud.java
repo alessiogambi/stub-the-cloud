@@ -11,6 +11,7 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
 
 import edu.mit.csail.sdg.annotations.Ensures;
@@ -33,10 +34,18 @@ import edu.mit.csail.sdg.squander.Squander;
 @SpecField({
 /* All the VM deployed in the cloud */
 "vms : set DeclarativeNode",
-/* Running VM */
+/*
+ * Running VM
+ */
 "running : set DeclarativeNode",
-/* Disk Images */
-"images : set org.jclouds.compute.domain.Image" })
+/*
+ * Disk Images
+ */
+"images : set org.jclouds.compute.domain.Image",
+/*
+ * Image Flavours, a.k.a., Hardware configuration
+ */
+"flavors : set org.jclouds.compute.domain.Hardware" })
 @Invariant({//
 /* All the VM must have unique ID */
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
@@ -48,17 +57,19 @@ import edu.mit.csail.sdg.squander.Squander;
 		/* This is only to avoid clsSpec ! */
 		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
 		/* Null is not an option for Images */
-		// " null !in this.images"
-		"no (null & this.images)" })
+		"no (null & this.images)",
+		/* Null is not an option for Hardware */
+		"no (null & this.flavors)" })
 public class DeclarativeCloud {
 
 	public String toString() {
-		return "IMAGES:" + this.getAllImages() + "\n" + "NODES:"
-				+ this.getAllNodes() + "\n";
+		return "IMAGES:" + this.getAllImages() + "\n"//
+				+ "FLAVORS:" + this.getAllFlavors() + "\n"//
+				+ "NODES:" + this.getAllNodes() + "\n";
 	}
 
-	public DeclarativeCloud(Set<Image> images) {
-		init(images);
+	public DeclarativeCloud(Set<Image> images, Set<Hardware> flavors) {
+		init(images, flavors);
 	}
 
 	public DeclarativeCloud() {
@@ -81,23 +92,31 @@ public class DeclarativeCloud {
 	}
 
 	// @Ensures({ "#this.vms = 0", "#this.images = 0" })
-	@Ensures({ "no this.vms", "no this.images" })
-	@Modifies({ "this.vms", "this.images" })
+	@Ensures({ "no this.vms", "no this.images", "no this.flavors" })
+	@Modifies({ "this.vms", "this.images", "this.flavors" })
 	private void init() {
 		Squander.exe(this);
 	}
 
 	@Requires({ "null ! in _images.elts" })
-	@Ensures({ "no this.vms", "this.images = _images.elts" })
-	@Modifies({ "this.vms", "this.images" })
-	private void init(Set<Image> _images) {
-		Squander.exe(this, _images);
+	@Ensures({ "no this.vms", "this.images = _images.elts",
+			"this.flavors = _flavors.elts" })
+	@Modifies({ "this.vms", "this.images", "this.flavors" })
+	private void init(Set<Image> _images, Set<Hardware> _flavors) {
+		Squander.exe(this, _images, _flavors);
 	}
 
 	@Ensures("return.elts == this.images")
 	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
 	@Modifies("return.elts")
 	public Set<Image> getAllImages() {
+		return Squander.exe(this);
+	}
+
+	@Ensures("return.elts == this.flavors")
+	@FreshObjects(cls = Set.class, typeParams = { Hardware.class }, num = 1)
+	@Modifies("return.elts")
+	public Set<Hardware> getAllFlavors() {
 		return Squander.exe(this);
 	}
 
@@ -216,17 +235,22 @@ public class DeclarativeCloud {
 		Squander.exe(this, _id);
 	}
 
-	/*
-	 * IMAGE MANAGEMENT: not required for "pure" ComputeService scenario
-	 */
-	public void addImage(Image i) {
-		addImage(i, allocateID());
-	}
-
-	@Ensures({ "this.images = @old(this.images) + i",//
-			"i.imageID = _id" })
-	@Modifies({ "this.images", "i.imageID" })
-	public void addImage(Image i, String _id) {
-		Squander.exe(this, i, _id);
-	}
+	// /*
+	// * IMAGE MANAGEMENT: not required for "pure" ComputeService scenario
+	// */
+	// public void addImage(Image i) {
+	// addImage(i, allocateID());
+	// }
+	//
+	// ALAS with do not access the ID element the Image.sfspec are not used !
+	// @Ensures({ "this.images = @old(this.images) + i",//
+	// "i.imageID = _id" })
+	// @Modifies({ "this.images", "i.imageID" })
+	// public void addImage(Image i, String _id) {
+	// Squander.exe(this, i, _id);
+	// }
+	//
+	// /*
+	// * HARDWARE MANAGEMENT: not required for "pure" ComputeService scenario
+	// */
 }
