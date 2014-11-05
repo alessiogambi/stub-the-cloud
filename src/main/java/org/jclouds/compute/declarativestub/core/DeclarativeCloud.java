@@ -203,6 +203,18 @@ public class DeclarativeCloud {
 		return Squander.exe(this, _id);
 	}
 
+	// TODO Note that this return exactly the same object !
+	// FIXME To create instances od Image we need to provide a ImageSer !
+	@Requires({
+			// At least one VM
+			"some this.images",
+			// The node must be in the running nodes
+			"return.id in this.images.id" })
+	@Ensures("return in this.images && return.id = _id")
+	public Image getImage(String _id) {
+		return Squander.exe(this, _id);
+	}
+
 	@Requires({
 			// At least one VM
 			"some this.vms",

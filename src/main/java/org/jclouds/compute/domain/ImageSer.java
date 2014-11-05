@@ -18,7 +18,7 @@ import edu.mit.csail.sdg.squander.spec.JavaScene;
  */
 public class ImageSer implements IObjSer {
 
-	public static final String ID = "imageID";
+	public static final String ID = "id";
 
 	@Override
 	public boolean accepts(Class<?> clz) {

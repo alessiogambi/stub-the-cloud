@@ -332,6 +332,15 @@ public class DeclarativeCloudTest {
 	}
 
 	@Test
+	public void testGetImage() {
+		String imageId = createDefaultImagesForTest().iterator().next().getId();
+
+		Image image = cloud.getImage(imageId);
+		// Assert ID
+		Assert.assertEquals(image.getId(), imageId);
+	}
+
+	@Test
 	public void testGetNodeByID() {
 		DeclarativeNode n = cloud.createNode();
 		// Return the right node

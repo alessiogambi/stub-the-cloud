@@ -313,7 +313,8 @@ public class DeclarativeStubComputeServiceAdapter implements
 
 	@Override
 	public Image getImage(String id) {
-		return find(listImages(), ImagePredicates.idEquals(id), null);
+		return cloud.getImage(id);
+		// return find(listImages(), ImagePredicates.idEquals(id), null);
 	}
 
 	@SuppressWarnings("unchecked")
