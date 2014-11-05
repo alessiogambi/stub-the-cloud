@@ -1,7 +1,5 @@
 package org.jclouds.compute.declarativestub.config;
 
-import static com.google.common.collect.Iterables.find;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,7 +25,6 @@ import org.jclouds.compute.domain.Processor;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.Volume;
 import org.jclouds.compute.domain.internal.VolumeImpl;
-import org.jclouds.compute.predicates.ImagePredicates;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 
@@ -115,11 +112,20 @@ public class DeclarativeStubComputeServiceAdapter implements
 			 * {@link BaseComputeServiceContextModule#provideOsVersionMap}
 			 */
 			Map<OsFamily, Map<String, String>> osToVersionMap) {
-		//
-		cloud = new DeclarativeCloud(provideImages(), provideHardware());
 
 		this.location = location;
 		this.osToVersionMap = osToVersionMap;
+		// Initialize the DeclarativeCloud
+		cloud = new DeclarativeCloud(provideImages(), provideHardware(),
+				provideLocations());
+	}
+
+	private Set<Location> provideLocations() {
+		// Empty location is fine ?!
+		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
+		// Add the one provided via injection
+		locations.add(this.location.get());
+		return locations.build();
 	}
 
 	// Cannot be called from dependency modules withouth firstly inject os and
@@ -320,7 +326,6 @@ public class DeclarativeStubComputeServiceAdapter implements
 	@SuppressWarnings("unchecked")
 	@Override
 	public Iterable<Location> listLocations() {
-		ImmutableList.Builder<Location> locations = ImmutableList.builder();
-		return locations.build();
+		return cloud.getAllLocations();
 	}
 }

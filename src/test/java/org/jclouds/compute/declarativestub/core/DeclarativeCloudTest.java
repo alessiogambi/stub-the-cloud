@@ -14,6 +14,9 @@ import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Processor;
 import org.jclouds.compute.domain.Volume;
 import org.jclouds.compute.domain.internal.VolumeImpl;
+import org.jclouds.domain.Location;
+import org.jclouds.domain.LocationBuilder;
+import org.jclouds.domain.LocationScope;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -39,8 +42,15 @@ public class DeclarativeCloudTest {
 
 	@BeforeMethod
 	public void initializeCloud() {
-		cloud = new DeclarativeCloud(createDefaultImagesForTest(),
-				createDefaultFlavorsForTest());
+		cloud = new DeclarativeCloud(
+		//
+				createDefaultImagesForTest(),
+				//
+				createDefaultFlavorsForTest(),
+				//
+				createDefaultLocationsForTest()
+		//
+		);
 	}
 
 	@Test
@@ -94,6 +104,15 @@ public class DeclarativeCloudTest {
 				createDefaultFlavorsForTest());
 	}
 
+	@Test
+	public void testListLocations() {
+		System.out.println("DeclarativeCloudTest.testListLocations() "
+				+ cloud.getAllLocations());
+
+		Assert.assertEquals(cloud.getAllLocations(),
+				createDefaultLocationsForTest());
+	}
+
 	private Set<Image> createDefaultImagesForTest() {
 		Builder<Image> images = ImmutableSet.builder();
 		int id = 1;
@@ -119,6 +138,15 @@ public class DeclarativeCloudTest {
 
 		images.add(image);
 		return images.build();
+	}
+
+	private Set<Location> createDefaultLocationsForTest() {
+		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
+		int id = 1;
+		locations.add(new LocationBuilder().id("" + id)
+				.description("Location-description").scope(LocationScope.ZONE)
+				.build());
+		return locations.build();
 	}
 
 	private Set<Hardware> createDefaultFlavorsForTest() {
@@ -175,8 +203,11 @@ public class DeclarativeCloudTest {
 
 		Image image = createDefaultImagesForTest().iterator().next();
 		Hardware flavor = createDefaultFlavorsForTest().iterator().next();
-		cloud = new DeclarativeCloud(ImmutableSet.<Image> builder().add(image)
-				.build(), ImmutableSet.<Hardware> builder().add(flavor).build());
+		Location location = createDefaultLocationsForTest().iterator().next();
+		cloud = new DeclarativeCloud(//
+				ImmutableSet.<Image> builder().add(image).build(),//
+				ImmutableSet.<Hardware> builder().add(flavor).build(),//
+				ImmutableSet.<Location> builder().add(location).build());
 
 		Assert.assertEquals(cloud.getAllImages().size(), 1);
 

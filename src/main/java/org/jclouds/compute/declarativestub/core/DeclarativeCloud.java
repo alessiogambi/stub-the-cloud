@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
+import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;
@@ -45,7 +46,11 @@ import edu.mit.csail.sdg.squander.Squander;
 /*
  * Image Flavours, a.k.a., Hardware configuration
  */
-"flavors : set org.jclouds.compute.domain.Hardware" })
+"flavors : set org.jclouds.compute.domain.Hardware",
+/*
+ * Location
+ */
+"locations : set org.jclouds.domain.Location" })
 @Invariant({//
 /* All the VM must have unique ID */
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
@@ -59,17 +64,21 @@ import edu.mit.csail.sdg.squander.Squander;
 		/* Null is not an option for Images */
 		"no (null & this.images)",
 		/* Null is not an option for Hardware */
-		"no (null & this.flavors)" })
+		"no (null & this.flavors)",
+		/* Null is not an option for Location */
+		"no (null & this.locations)" })
 public class DeclarativeCloud {
 
 	public String toString() {
 		return "IMAGES:" + this.getAllImages() + "\n"//
+				+ "LOCATIONS:" + this.getAllLocations() + "\n"//
 				+ "FLAVORS:" + this.getAllFlavors() + "\n"//
-				+ "NODES:" + this.getAllNodes() + "\n";
+				+ "NODES:" + this.getAllNodes();
 	}
 
-	public DeclarativeCloud(Set<Image> images, Set<Hardware> flavors) {
-		init(images, flavors);
+	public DeclarativeCloud(Set<Image> images, Set<Hardware> flavors,
+			Set<Location> locations) {
+		init(images, flavors, locations);
 	}
 
 	public DeclarativeCloud() {
@@ -91,19 +100,23 @@ public class DeclarativeCloud {
 		return "" + currentId.incrementAndGet();
 	}
 
-	// @Ensures({ "#this.vms = 0", "#this.images = 0" })
-	@Ensures({ "no this.vms", "no this.images", "no this.flavors" })
-	@Modifies({ "this.vms", "this.images", "this.flavors" })
+	@Ensures({ "no this.vms", "no this.images", "no this.flavors",
+			"no this.locations" })
+	@Modifies({ "this.vms", "this.images", "this.flavors", "this.locations" })
 	private void init() {
 		Squander.exe(this);
 	}
 
-	@Requires({ "null ! in _images.elts" })
-	@Ensures({ "no this.vms", "this.images = _images.elts",
-			"this.flavors = _flavors.elts" })
-	@Modifies({ "this.vms", "this.images", "this.flavors" })
-	private void init(Set<Image> _images, Set<Hardware> _flavors) {
-		Squander.exe(this, _images, _flavors);
+	@Requires({ "null ! in _images.elts", "null ! in _flavors.elts",
+			"null ! in _locations.elts", })
+	@Ensures({ "no this.vms", //
+			"this.images = _images.elts",//
+			"this.flavors = _flavors.elts",//
+			"this.locations = _locations.elts" })
+	@Modifies({ "this.vms", "this.images", "this.flavors", "this.locations" })
+	private void init(Set<Image> _images, Set<Hardware> _flavors,
+			Set<Location> _locations) {
+		Squander.exe(this, _images, _flavors, _locations);
 	}
 
 	@Ensures("return.elts == this.images")
@@ -245,6 +258,13 @@ public class DeclarativeCloud {
 	 */
 	public void suspendNode(String _id) {
 		Squander.exe(this, _id);
+	}
+
+	@Ensures("return.elts == this.locations")
+	@FreshObjects(cls = Set.class, typeParams = { Location.class }, num = 1)
+	@Modifies("return.elts")
+	public Set<Location> getAllLocations() {
+		return Squander.exe(this);
 	}
 
 	// /*
