@@ -8,7 +8,12 @@ import org.jclouds.domain.Location;
 import edu.mit.csail.sdg.annotations.Invariant;
 
 @Invariant({ "this.status != null", "this.id != null", "this.image != null",
-		"this.hardware != null", "this.location!= null" })
+		"this.hardware != null", "this.location!= null",
+		/*
+		 * Make sure Node location is the same as Hardware and Image location
+		 */
+//		"this.location = this.image.location" //
+		})
 public class DeclarativeNode {
 
 	// TODO Add name

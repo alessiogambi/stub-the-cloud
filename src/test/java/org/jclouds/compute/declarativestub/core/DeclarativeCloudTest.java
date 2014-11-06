@@ -57,7 +57,7 @@ public class DeclarativeCloudTest {
 	public void initializeCloud() {
 		cloud = new DeclarativeCloud(
 		//
-				createDefaultImagesForTest(),
+				createDefaultImagesForTest(createDefaultLocationsForTest()),
 				//
 				createDefaultHardwaresForTest(),
 				//
@@ -74,7 +74,8 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testInit() {
-		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest());
+		Assert.assertEquals(cloud.getAllImages(),
+				createDefaultImagesForTest(createDefaultLocationsForTest()));
 		Assert.assertEquals(cloud.getAllHardwares(),
 				createDefaultHardwaresForTest());
 		Assert.assertEquals(cloud.getAllLocations(),
@@ -107,7 +108,8 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testListImages() {
-		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest());
+		Assert.assertEquals(cloud.getAllImages(),
+				createDefaultImagesForTest(createDefaultLocationsForTest()));
 	}
 
 	@Test
@@ -128,13 +130,15 @@ public class DeclarativeCloudTest {
 				createDefaultLocationsForTest());
 	}
 
-	private Set<Image> createDefaultImagesForTest() {
+	private Set<Image> createDefaultImagesForTest(Set<Location> locations) {
+		// Note we need to guarantee that Images are registered in their
+		// locations
 		Builder<Image> images = ImmutableSet.builder();
 		int id = 0;
 		Image image = new ImageBuilder()
-				.ids("IMAGE" + id++)
+				.ids("IMAGE" + ++id)
 				.name("IMAGE" + id)
-				.location(null)
+				.location(locations.iterator().next())
 				.operatingSystem(
 						new OperatingSystem(OsFamily.LINUX, "desc", "version",
 								null, "desc", false)).description("desc")
@@ -143,9 +147,9 @@ public class DeclarativeCloudTest {
 		images.add(image);
 
 		image = new ImageBuilder()
-				.ids("IMAGE" + id++)
+				.ids("IMAGE" + ++id)
 				.name("IMAGE" + id)
-				.location(null)
+				.location(locations.iterator().next())
 				.operatingSystem(
 						new OperatingSystem(OsFamily.WINDOWS, "desc",
 								"version", null, "desc", true))
@@ -158,9 +162,12 @@ public class DeclarativeCloudTest {
 	private Set<Location> createDefaultLocationsForTest() {
 		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
 		int id = 1;
-		locations.add(new LocationBuilder().id("" + id)
+		locations.add(new LocationBuilder().id("LOCATION-" + id++)
 				.description("Location-description").scope(LocationScope.ZONE)
 				.build());
+		locations.add(new LocationBuilder().id("LOCATION-" + id++)
+				.description("Another-Location-description")
+				.scope(LocationScope.ZONE).build());
 		return locations.build();
 	}
 
@@ -216,9 +223,12 @@ public class DeclarativeCloudTest {
 	public void testCreateNodeWithImage() {
 		// Only one image
 
-		Image image = createDefaultImagesForTest().iterator().next();
-		Hardware flavor = createDefaultHardwaresForTest().iterator().next();
 		Location location = createDefaultLocationsForTest().iterator().next();
+		// Force the use of the very same location (as set)
+		Image image = createDefaultImagesForTest(
+				ImmutableSet.<Location> builder().add(location).build())
+				.iterator().next();
+		Hardware flavor = createDefaultHardwaresForTest().iterator().next();
 
 		cloud = new DeclarativeCloud(//
 				ImmutableSet.<Image> builder().add(image).build(),//
@@ -226,13 +236,15 @@ public class DeclarativeCloudTest {
 				ImmutableSet.<Location> builder().add(location).build());
 
 		// Assert.assertEquals(cloud.getAllImages().size(), 1);
-		//
-		// // Exec
-		// DeclarativeNode n = cloud.createNode();
-		// Assert.assertNotNull(n);
-		// Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
-		// // NOT SURE THE EQUALS IS FINE !
-		// Assert.assertEquals(n.getImage(), image);
+
+		// Exec
+		DeclarativeNode n = cloud.createNode();
+		Assert.assertNotNull(n);
+		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
+		// NOT SURE THE EQUALS IS FINE !
+		Assert.assertEquals(n.getImage(), image);
+		// Assert SAME Location
+		Assert.assertEquals(n.getImage().getLocation(), n.getLocation());
 	}
 
 	public void testCreateNode() {
@@ -240,6 +252,8 @@ public class DeclarativeCloudTest {
 		System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 		Assert.assertNotNull(n);
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
+		// Assert SAME Location
+		Assert.assertEquals(n.getImage().getLocation(), n.getLocation());
 	}
 
 	@Test
@@ -250,10 +264,14 @@ public class DeclarativeCloudTest {
 		Assert.assertNotNull(n);
 		Assert.assertNotNull(n.getImage());
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
+		// Assert SAME location
+		Assert.assertEquals(n.getImage().getLocation(), n.getLocation());
 	}
 
 	@Test
 	public void testCreateAndListNode() {
+
+		System.out.println("\n\n\n " + cloud + " \n\n\n");
 		cloud.createNode();
 		Set<DeclarativeNode> nodes = cloud.getAllNodes();
 		System.out.println("DeclarativeCloudTest.testAddAndListNode() Nodes "
@@ -380,7 +398,8 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testGetImage() {
-		String imageId = createDefaultImagesForTest().iterator().next().getId();
+		String imageId = createDefaultImagesForTest(
+				createDefaultLocationsForTest()).iterator().next().getId();
 
 		Image image = cloud.getImage(imageId);
 		// Assert ID

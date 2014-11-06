@@ -131,7 +131,7 @@ public class DeclarativeCloud {
 			// So we need to force it ? a = b means that the atom relation is
 			// the same not the instance of the object !
 			"this.images = _images.elts",//
-			"all image : this.images | one _image : _images.elts | ( image = _image & image.id = _image.id )",
+			"all image : this.images | one _image : _images.elts | ( image = _image & image.id = _image.id & image.location = _image.location)",
 			//
 			"this.hardwares = _hardwares.elts",//
 			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware & hardware.id = _hardware.id )",
@@ -145,7 +145,7 @@ public class DeclarativeCloud {
 			//
 			"this.images",
 			// Why this ? and not simply this.images.id ?
-			"Image.id",
+			"Image.id", "Image.location",
 			//
 			"this.hardwares",
 			//
@@ -203,46 +203,36 @@ public class DeclarativeCloud {
 			//
 			"#this.images > 0", "#this.hardwares > 0", "#this.locations > 0" })
 	@Ensures({
-			/* Deploy the new node with given ID and RUNNING state */
-			// THIS ONE IS FAULTY + return?
-			"this.vms = @old(this.vms) + return",
-			/* Maintain ID */
-			"return.id = newNodeID",
-			/* Start VM as RUNNING */
-			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-			/*
-			 * Node and Image connection: we do not care, but the image for the
-			 * new node must be one of the available one !!
-			 */
-			"return.image in this.images",
-			/*
-			 * Pick one location
-			 */
-			"return.location in this.locations",
-			/*
-			 * Pick one Hardware configuration
-			 */
-			"return.hardware in this.hardwares" })
+	/* Deploy the new node with given ID and RUNNING state */
+	"this.vms = @old(this.vms) + return",
+	/* Maintain ID */
+	"return.id = newNodeID",
+	/* Start VM as RUNNING */
+	"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+	/*
+	 * Node and Image connection: we do not care, but the image for the new node
+	 * must be one of the available one !!
+	 */
+	"return.image in this.images",
+	/*
+	 * Assign the location of the node to be the one of the image, such that is
+	 * the location of the image ! (cannot do it in 3 steps ! image in images,
+	 * location in locations, image.location = location )
+	 */
+	"return.location = return.image.location",
+	/*
+	 * Pick one Hardware configuration
+	 */
+	"return.hardware in this.hardwares", })
 	@Modifies({
 			"this.vms", //
 			"return.id", "return.image", "return.status", "return.location",
-			"return.hardware" })
-	@Options(ensureAllInts = true, solveAll = true, bitwidth = 8)
+			"return.image.location", "return.location", "return.hardware", //
+	})
+	@Options(ensureAllInts = true, solveAll = true, bitwidth = 5)
 	public DeclarativeNode createNode(String newNodeID) {
 		return Squander.exe(this, newNodeID);
 	}
-
-	// @Requires({
-	// // At least one VM
-	// "some this.vms",
-	// // The node to stop must be in the running nodes
-	// "node.id in this.vms.id" })
-	// @Ensures({ "node.id !in this.vms.id && #this.vms = #@old(this.vms) - 1"
-	// })
-	// @Modifies({ "this.vms", })
-	// public void removeNode(DeclarativeNode node) {
-	// Squander.exe(this, node);
-	// }
 
 	@Requires({
 			// At least one VM
@@ -255,21 +245,6 @@ public class DeclarativeCloud {
 		Squander.exe(this, _id);
 	}
 
-	// @Requires({
-	// // At least one VM
-	// "some this.vms",
-	// // The node to stop must be in the running nodes
-	// "node.id in this.vms.id" })
-	// @Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
-	// @Modifies({
-	// // Now I need to specify also return.image.id
-	// "return.id", "return.status", "return.image", "return.image.id",
-	// "return.location" })
-	// @FreshObjects(cls = DeclarativeNode.class, num = 1)
-	// public DeclarativeNode getNode(DeclarativeNode node) {
-	// return Squander.exe(this, node);
-	// }
-
 	@Requires({
 			// At least one VM
 			"some this.vms",
@@ -278,7 +253,7 @@ public class DeclarativeCloud {
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
 	// I think this is mandatory since we are creating a new instance, but it is
 	// not really comfortable, isn't it ?
-	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
+	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location && return.hardware = vm.hardware")
 	@Modifies({ "return.id", "return.status", "return.image",
 			"return.location", "return.hardware" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
