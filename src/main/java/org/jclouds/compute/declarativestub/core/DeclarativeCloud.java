@@ -48,8 +48,7 @@ import edu.mit.csail.sdg.squander.Squander;
  */
 "hardwares : set org.jclouds.compute.domain.Hardware",
 /*
- * Location. This one can be implemented by different objects and this kind of
- * create problems !
+ * Location.
  */
 "locations : set org.jclouds.domain.Location" })
 // TODO Most of resources have same basic behavior (unique ID for example) can
@@ -63,7 +62,7 @@ import edu.mit.csail.sdg.squander.Squander;
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",//
 		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",//
 		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",//
-		// "all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",//
+		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",//
 		//
 		/* Null is not an option for Virtual Machines */
 		"no (null & this.vms)",
@@ -120,23 +119,27 @@ public class DeclarativeCloud {
 	@Requires({ //
 	"null ! in _images.elts",//
 			"null ! in _hardwares.elts",//
-			// Why this do not fail if 2 there are more than 1 elements in
+			// Why does this not fail if 2 elements have the same id ?!
 			// Hardware.id ?!
-			"all _hardwareA : _hardwares.elts | all _hardwareB : _hardwares.elts - _hardwareA | _hardwareA.id != _hardwareB.id ",//
+			// "all _hardwareA : _hardwares.elts | all _hardwareB : _hardwares.elts - _hardwareA | _hardwareA.id != _hardwareB.id ",//
 			"null ! in _locations.elts" //
 	})
 	// Requires unique ID !
 	@Ensures({
 			"no this.vms", //
-			// This condition does not guarantees that images keep their ID
+			// This condition does not guarantees that images keep their ID //
+			// So we need to force it ? a = b means that the atom relation is
+			// the same not the instance of the object !
 			"this.images = _images.elts",//
-			// So we need to force it ?
 			"all image : this.images | one _image : _images.elts | ( image = _image & image.id = _image.id )",
 			//
 			"this.hardwares = _hardwares.elts",//
-			//
 			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware & hardware.id = _hardware.id )",
+			//
 			"this.locations = _locations.elts",//
+			//
+			"all location : this.locations | one _location : _locations.elts | ( location = _location & location.id = _location.id )",
+
 	})
 	@Modifies({ "this.vms",
 			//
@@ -149,8 +152,8 @@ public class DeclarativeCloud {
 			"Hardware.id",
 			//
 			"this.locations",
-	// This one cannot be found ?!
-	// "this.locations.id" //
+			//
+			"Location.id" //
 	})
 	@Options(ensureAllInts = true, solveAll = true)
 	/**
