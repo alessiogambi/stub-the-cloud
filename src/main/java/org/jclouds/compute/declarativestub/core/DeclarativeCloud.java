@@ -218,9 +218,15 @@ public class DeclarativeCloud {
 			/*
 			 * Pick one location
 			 */
-			"return.location in this.locations" })
-	@Modifies({ "this.vms", //
-			"return.id", "return.image", "return.status", "return.location" })
+			"return.location in this.locations",
+			/*
+			 * Pick one Hardware configuration
+			 */
+			"return.hardware in this.hardwares" })
+	@Modifies({
+			"this.vms", //
+			"return.id", "return.image", "return.status", "return.location",
+			"return.hardware" })
 	@Options(ensureAllInts = true, solveAll = true, bitwidth = 8)
 	public DeclarativeNode createNode(String newNodeID) {
 		return Squander.exe(this, newNodeID);
@@ -270,8 +276,11 @@ public class DeclarativeCloud {
 			// The node must be in the running nodes
 			"return.id in this.vms.id" })
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
+	// I think this is mandatory since we are creating a new instance, but it is
+	// not really comfortable, isn't it ?
 	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
-	@Modifies({ "return.id", "return.status", "return.image", "return.location" })
+	@Modifies({ "return.id", "return.status", "return.image",
+			"return.location", "return.hardware" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id) {
 		return Squander.exe(this, _id);

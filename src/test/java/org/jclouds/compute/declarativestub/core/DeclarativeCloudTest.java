@@ -415,6 +415,10 @@ public class DeclarativeCloudTest {
 		// Assert STATE
 		Assert.assertEquals(n.getStatus(), _n.getStatus());
 		Assert.assertEquals(_n.getStatus(), NodeMetadataStatus.RUNNING);
+		// Assert IMAGE
+		Assert.assertEquals(n.getImage(), _n.getImage());
+		// Assert HARDWARE
+		Assert.assertEquals(n.getHardware(), _n.getHardware());
 	}
 
 	private boolean hasStatus(Set<DeclarativeNode> nodes, DeclarativeNode node,
@@ -472,6 +476,7 @@ public class DeclarativeCloudTest {
 
 	}
 
+	// TODO Depends on cloud.getNode() !
 	@Test
 	public void testSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
@@ -482,6 +487,7 @@ public class DeclarativeCloudTest {
 				NodeMetadataStatus.SUSPENDED);
 	}
 
+	// TODO Depends on cloud.getNode() !
 	@Test
 	public void testSuspendOnlyTheNode() {
 		// WARNING: This test depends on the correctness of getNode!
@@ -531,6 +537,7 @@ public class DeclarativeCloudTest {
 				+ cloud.getAllNodes());
 	}
 
+	// TODO Depends on cloud.getNode() !
 	@Test
 	public void testStartSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
@@ -550,6 +557,7 @@ public class DeclarativeCloudTest {
 				NodeMetadataStatus.RUNNING);
 	}
 
+	// TODO Depends on cloud.getNode() !
 	@Test
 	public void testStartOnlyTheSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
