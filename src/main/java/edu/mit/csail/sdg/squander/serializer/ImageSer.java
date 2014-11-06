@@ -1,7 +1,15 @@
-package org.jclouds.compute.domain;
+package edu.mit.csail.sdg.squander.serializer;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import org.jclouds.compute.domain.Image;
+import org.jclouds.compute.domain.ImageBuilder;
+import org.jclouds.compute.domain.ImageStatus;
+import org.jclouds.compute.domain.OperatingSystem;
+import org.jclouds.compute.domain.OsFamily;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
 
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
@@ -27,30 +35,40 @@ public class ImageSer implements IObjSer {
 
 	@Override
 	public Image newInstance(Class<?> cls) {
-		// TODO Cannot create instances out of the blue right now
-		throw new RuntimeException("cannot create a new Image");
+		// Create a default image
+		Image image = new ImageBuilder()
+				.ids("Default IMAGE")
+				.name("Default IMAGE")
+				.location(null)
+				.operatingSystem(
+						new OperatingSystem(OsFamily.LINUX, "desc", "version",
+								null, "desc", false)).description("desc")
+				.status(ImageStatus.AVAILABLE).build();
+		return image;
 	}
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		System.out.println("ImageSer.absFunc() START");
+		System.out.println("ImageSer.absFunc() " + obj);
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
 
-		// TODO Not sure if this is valid
+		// From the concrete object derive the abstract state (the id)
 		Image concreteObject = (Image) obj;
-		String imageID = concreteObject.getId();
+		String id = concreteObject.getId();
 
+		// Store the relation ?
 		FieldValue fvLen = new FieldValue(cls.findField(ID), 2);
-		fvLen.addTuple(new ObjTuple(obj, imageID));
+		fvLen.addTuple(new ObjTuple(obj, id));
 		result.add(fvLen);
-		System.out.println("ImageSer.absFunc() END");
+		System.out.println("ImageSer.absFunc() " + result);
 		return result;
 	}
 
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		System.out.println("ImageSer.concrFunc() START");
+		System.out.println("ImageSer.concrFunc() object " + obj);
+		System.out.println("ImageSer.concrFunc() fieldValue " + fieldValue);
 		String fldName = fieldValue.jfield().name();
 		// TODO Check that the object is really an Image ?
 		if (ID.equals(fldName)) {
@@ -73,14 +91,7 @@ public class ImageSer implements IObjSer {
 			Image image = (Image) concreteObj;
 			// Reset all the attributes
 			ImageBuilder builder = ImageBuilder.fromImage(image);
-			// Overwrite the id
-			System.out.println("ImageSer.restoreImageID() value.tuples "
-					+ value.tuples());
-
 			for (ObjTuple ot : value) {
-				System.out
-						.println("ImageSer.restoreImageID() ot.get(1).toString() "
-								+ ot.get(1).toString());
 				builder.id(ot.get(1).toString());
 			}
 

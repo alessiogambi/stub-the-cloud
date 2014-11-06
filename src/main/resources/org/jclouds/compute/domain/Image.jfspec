@@ -1,6 +1,6 @@
 interface Image {
 
-	@SpecField("id : one String")
-	
-	
+	@SpecField("id : one String" )
+
+	@Invariant("this.id != null")
 }

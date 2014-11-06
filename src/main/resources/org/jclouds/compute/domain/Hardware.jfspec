@@ -1,0 +1,5 @@
+interface Hardware {
+
+	@SpecField("id : one String")
+
+}

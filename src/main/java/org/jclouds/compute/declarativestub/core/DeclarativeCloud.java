@@ -44,18 +44,27 @@ import edu.mit.csail.sdg.squander.Squander;
  */
 "images : set org.jclouds.compute.domain.Image",
 /*
- * Image Flavours, a.k.a., Hardware configuration
+ * Image Flavors, a.k.a., Hardware configuration
  */
 "flavors : set org.jclouds.compute.domain.Hardware",
 /*
  * Location
  */
 "locations : set org.jclouds.domain.Location" })
+// TODO Most of resources have same basic behavior (unique ID for example) can
+// we abstract them into an abstract entity ?
+// Note that this should already be how the code is organized (ComputeService
+// Resources)
+// NOTE IF SOMETHING IS NOT MENTIONED HERE(like flavor.id) IT WILL NOT APPEAR
+// INTO
 @Invariant({//
 /* All the VM must have unique ID */
-		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",//
+		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",//
+		// "all flavorA : this.flavors | all flavorB : this.flavors - flavorA | flavorA.id != flavorB.id",//
+		// "all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",//
+		//
 		/* Null is not an option for Virtual Machines */
-		// "null !in this.vms",
 		"no (null & this.vms)",
 		/* Running VM */
 		"this.running in this.vms",
@@ -108,12 +117,37 @@ public class DeclarativeCloud {
 	}
 
 	@Requires({ "null ! in _images.elts", "null ! in _flavors.elts",
-			"null ! in _locations.elts", })
-	@Ensures({ "no this.vms", //
+			"null ! in _locations.elts" })
+	@Ensures({
+			"no this.vms", //
+			// This condition does not guarantees that images keep their ID
 			"this.images = _images.elts",//
+			// So we need to force it ?
+			"all image : this.images | one _image : _images.elts | ( image = _image & image.id = _image.id )",
 			"this.flavors = _flavors.elts",//
-			"this.locations = _locations.elts" })
-	@Modifies({ "this.vms", "this.images", "this.flavors", "this.locations" })
+			"this.locations = _locations.elts",//
+	})
+	@Modifies({ "this.vms",
+			//
+			"this.images",
+			// Why this ? and not simply this.images.id ?
+			"Image.id",
+			//
+			"this.flavors",
+			//
+			// "this.flavors.id",
+			//
+			"this.locations",
+	// This one cannot be found ?!
+	// "this.locations.id" //
+	})
+	@Options(ensureAllInts = true, solveAll = true)
+	/**
+	 * Before calling init the object ImageImp, despite having it's id set, has no element in the relation Image__ID, so we need to force it somehow
+	 * @param _images
+	 * @param _flavors
+	 * @param _locations
+	 */
 	private void init(Set<Image> _images, Set<Hardware> _flavors,
 			Set<Location> _locations) {
 		Squander.exe(this, _images, _flavors, _locations);
@@ -151,8 +185,9 @@ public class DeclarativeCloud {
 	// TODO THis implementation does not force a specific image nor location, it
 	// is under spec to simplify the development !
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ "newNodeID !in @old(this.vms.id)", "#this.images > 0",
-			"#this.flavors > 0", "#this.locations > 0" })
+	@Requires({ "newNodeID !in @old(this.vms.id)",
+			//
+			"#this.images > 0", "#this.flavors > 0", "#this.locations > 0" })
 	@Ensures({
 			/* Deploy the new node with given ID and RUNNING state */
 			// THIS ONE IS FAULTY + return?
@@ -177,16 +212,17 @@ public class DeclarativeCloud {
 		return Squander.exe(this, newNodeID);
 	}
 
-	@Requires({
-			// At least one VM
-			"some this.vms",
-			// The node to stop must be in the running nodes
-			"node.id in this.vms.id" })
-	@Ensures({ "node.id !in this.vms.id && #this.vms = #@old(this.vms) - 1" })
-	@Modifies({ "this.vms", })
-	public void removeNode(DeclarativeNode node) {
-		Squander.exe(this, node);
-	}
+	// @Requires({
+	// // At least one VM
+	// "some this.vms",
+	// // The node to stop must be in the running nodes
+	// "node.id in this.vms.id" })
+	// @Ensures({ "node.id !in this.vms.id && #this.vms = #@old(this.vms) - 1"
+	// })
+	// @Modifies({ "this.vms", })
+	// public void removeNode(DeclarativeNode node) {
+	// Squander.exe(this, node);
+	// }
 
 	@Requires({
 			// At least one VM
@@ -199,17 +235,20 @@ public class DeclarativeCloud {
 		Squander.exe(this, _id);
 	}
 
-	@Requires({
-			// At least one VM
-			"some this.vms",
-			// The node to stop must be in the running nodes
-			"node.id in this.vms.id" })
-	@Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
-	@Modifies({ "return.id", "return.status", "return.image", "return.location" })
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	public DeclarativeNode getNode(DeclarativeNode node) {
-		return Squander.exe(this, node);
-	}
+	// @Requires({
+	// // At least one VM
+	// "some this.vms",
+	// // The node to stop must be in the running nodes
+	// "node.id in this.vms.id" })
+	// @Ensures("one vm : this.vms | vm.id=node.id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location")
+	// @Modifies({
+	// // Now I need to specify also return.image.id
+	// "return.id", "return.status", "return.image", "return.image.id",
+	// "return.location" })
+	// @FreshObjects(cls = DeclarativeNode.class, num = 1)
+	// public DeclarativeNode getNode(DeclarativeNode node) {
+	// return Squander.exe(this, node);
+	// }
 
 	@Requires({
 			// At least one VM
@@ -224,14 +263,13 @@ public class DeclarativeCloud {
 		return Squander.exe(this, _id);
 	}
 
-	// TODO Note that this return exactly the same object !
-	// FIXME To create instances od Image we need to provide a ImageSer !
 	@Requires({
 			// At least one VM
 			"#this.images > 0",
 			// The node must be in the running nodes
-			"return.id in this.images.id" })
-	@Ensures("return in this.images && return.id = _id")
+			"_id in this.images.id" })
+	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
+	@Ensures("one image : this.images | image.id=_id && return.id = image.id")
 	public Image getImage(String _id) {
 		return Squander.exe(this, _id);
 	}

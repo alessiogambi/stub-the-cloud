@@ -1,6 +1,4 @@
 interface Location {
 
-	@SpecField("id : one String")
-	
-	
+	@SpecField("id : one String")	
 }
