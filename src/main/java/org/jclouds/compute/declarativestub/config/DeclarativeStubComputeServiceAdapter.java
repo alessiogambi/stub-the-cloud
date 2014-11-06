@@ -309,7 +309,7 @@ public class DeclarativeStubComputeServiceAdapter implements
 	 */
 	@Override
 	public Iterable<Hardware> listHardwareProfiles() {
-		return cloud.getAllFlavors();
+		return cloud.getAllHardwares();
 	}
 
 	/**

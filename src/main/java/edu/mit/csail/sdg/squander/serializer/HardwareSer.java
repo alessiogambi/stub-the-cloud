@@ -3,8 +3,8 @@ package edu.mit.csail.sdg.squander.serializer;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
+import org.jclouds.compute.domain.Hardware;
+import org.jclouds.compute.domain.HardwareBuilder;
 
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
@@ -19,76 +19,73 @@ import edu.mit.csail.sdg.squander.spec.JavaScene;
  * @author alessiogambi
  *
  */
-public class ImageSer implements IObjSer {
+public class HardwareSer implements IObjSer {
 
 	public static final String ID = "id";
 
 	@Override
 	public boolean accepts(Class<?> clz) {
-		return Image.class.isAssignableFrom(clz);
+		return Hardware.class.isAssignableFrom(clz);
 	}
 
 	@Override
-	public Image newInstance(Class<?> cls) {
-		// Since at the moment we rely on user-provided instances we do not let
-		// Squander create instances of this interface
-		throw new RuntimeException("Cannot create instance of Image");
-		// // Create a default image
-		// Image image = new ImageBuilder()
-		// .ids("Default IMAGE")
-		// .name("Default IMAGE")
-		// .location(null)
-		// .operatingSystem(
-		// new OperatingSystem(OsFamily.LINUX, "desc", "version",
-		// null, "desc", false)).description("desc")
-		// .status(ImageStatus.AVAILABLE).build();
-		// return image;
+	public Hardware newInstance(Class<?> cls) {
+		// return new HardwareBuilder()
+		// .ids("HW-" + "Default")
+		// .name("default")
+		// .processors(ImmutableList.of(new Processor(1, 1.0)))
+		// .ram(1740)
+		// .volumes(
+		// ImmutableList.<Volume> of(new VolumeImpl((float) 160,
+		// true, false))).build();
+		throw new RuntimeException("Cannot create a new instance of Hardware !");
 	}
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		System.out.println("ImageSer.absFunc() " + obj);
+		System.out.println("HardwareSer.absFunc() " + obj);
+
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
 
 		// From the concrete object derive the abstract state (the id)
-		Image concreteObject = (Image) obj;
+		Hardware concreteObject = (Hardware) obj;
 		String id = concreteObject.getId();
 
 		// Store the relation ?
 		FieldValue fvLen = new FieldValue(cls.findField(ID), 2);
 		fvLen.addTuple(new ObjTuple(obj, id));
 		result.add(fvLen);
-		System.out.println("ImageSer.absFunc() " + result);
+		System.out.println("HardwareSer.absFunc() " + result);
 		return result;
 	}
 
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		System.out.println("ImageSer.concrFunc() object " + obj);
-		System.out.println("ImageSer.concrFunc() fieldValue " + fieldValue);
+		System.out.println("HardwareSer.concrFunc() object " + obj);
+		System.out.println("HardwareSer.concrFunc() fieldValue " + fieldValue);
 		String fldName = fieldValue.jfield().name();
-		// TODO Check that the object is really an Image ?
+		// TODO Check that the object is really an Hardware ?
 		if (ID.equals(fldName)) {
-			return restoreImageID(obj, fieldValue);
+			return restoreID(obj, fieldValue);
 		} else if (!fieldValue.jfield().isPureAbstract()) {
 			return obj;
 		} else {
-			throw new RuntimeException("Unknown field name for Image class: "
-					+ fldName);
+			throw new RuntimeException(
+					"Unknown field name for Hardware class: " + fldName);
 		}
 	}
 
 	// Not sure this is really ok !
-	private Object restoreImageID(Object concreteObj, FieldValue fieldValue) {
+	private Object restoreID(Object concreteObj, FieldValue fieldValue) {
 		try {
 			ObjTupleSet value = fieldValue.tupleSet();
 
 			assert value.arity() == 2;
 
-			Image image = (Image) concreteObj;
+			Hardware hardware = (Hardware) concreteObj;
 			// Reset all the attributes
-			ImageBuilder builder = ImageBuilder.fromImage(image);
+			HardwareBuilder builder = HardwareBuilder.fromHardware(hardware);
 			for (ObjTuple ot : value) {
 				builder.id(ot.get(1).toString());
 			}

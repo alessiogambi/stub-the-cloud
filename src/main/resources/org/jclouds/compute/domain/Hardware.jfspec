@@ -2,4 +2,6 @@ interface Hardware {
 
 	@SpecField("id : one String")
 
+	@Invariant("this.id != null")
+
 }

@@ -44,9 +44,9 @@ import edu.mit.csail.sdg.squander.Squander;
  */
 "images : set org.jclouds.compute.domain.Image",
 /*
- * Image Flavors, a.k.a., Hardware configuration
+ * Image hardwares, a.k.a., Hardware configuration
  */
-"flavors : set org.jclouds.compute.domain.Hardware",
+"hardwares : set org.jclouds.compute.domain.Hardware",
 /*
  * Location
  */
@@ -55,13 +55,13 @@ import edu.mit.csail.sdg.squander.Squander;
 // we abstract them into an abstract entity ?
 // Note that this should already be how the code is organized (ComputeService
 // Resources)
-// NOTE IF SOMETHING IS NOT MENTIONED HERE(like flavor.id) IT WILL NOT APPEAR
+// NOTE IF SOMETHING IS NOT MENTIONED HERE(like hardware.id) IT WILL NOT APPEAR
 // INTO
 @Invariant({//
 /* All the VM must have unique ID */
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",//
 		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",//
-		// "all flavorA : this.flavors | all flavorB : this.flavors - flavorA | flavorA.id != flavorB.id",//
+		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",//
 		// "all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",//
 		//
 		/* Null is not an option for Virtual Machines */
@@ -73,7 +73,7 @@ import edu.mit.csail.sdg.squander.Squander;
 		/* Null is not an option for Images */
 		"no (null & this.images)",
 		/* Null is not an option for Hardware */
-		"no (null & this.flavors)",
+		"no (null & this.hardwares)",
 		/* Null is not an option for Location */
 		"no (null & this.locations)" })
 public class DeclarativeCloud {
@@ -81,13 +81,13 @@ public class DeclarativeCloud {
 	public String toString() {
 		return "IMAGES:" + this.getAllImages() + "\n"//
 				+ "LOCATIONS:" + this.getAllLocations() + "\n"//
-				+ "FLAVORS:" + this.getAllFlavors() + "\n"//
+				+ "hardwares:" + this.getAllHardwares() + "\n"//
 				+ "NODES:" + this.getAllNodes();
 	}
 
-	public DeclarativeCloud(Set<Image> images, Set<Hardware> flavors,
+	public DeclarativeCloud(Set<Image> images, Set<Hardware> hardwares,
 			Set<Location> locations) {
-		init(images, flavors, locations);
+		init(images, hardwares, locations);
 	}
 
 	public DeclarativeCloud() {
@@ -109,22 +109,32 @@ public class DeclarativeCloud {
 		return "" + currentId.incrementAndGet();
 	}
 
-	@Ensures({ "no this.vms", "no this.images", "no this.flavors",
+	@Ensures({ "no this.vms", "no this.images", "no this.hardwares",
 			"no this.locations" })
-	@Modifies({ "this.vms", "this.images", "this.flavors", "this.locations" })
+	@Modifies({ "this.vms", "this.images", "this.hardwares", "this.locations" })
 	private void init() {
 		Squander.exe(this);
 	}
 
-	@Requires({ "null ! in _images.elts", "null ! in _flavors.elts",
-			"null ! in _locations.elts" })
+	@Requires({ //
+	"null ! in _images.elts",//
+			"null ! in _hardwares.elts",//
+			// Why this do not fail if 2 there are more than 1 elements in
+			// Hardware.id ?!
+			"all _hardwareA : _hardwares.elts | all _hardwareB : _hardwares.elts - _hardwareA | _hardwareA.id != _hardwareB.id ",//
+			"null ! in _locations.elts" //
+	})
+	// Requires unique ID !
 	@Ensures({
 			"no this.vms", //
 			// This condition does not guarantees that images keep their ID
 			"this.images = _images.elts",//
 			// So we need to force it ?
 			"all image : this.images | one _image : _images.elts | ( image = _image & image.id = _image.id )",
-			"this.flavors = _flavors.elts",//
+			//
+			"this.hardwares = _hardwares.elts",//
+			//
+			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware & hardware.id = _hardware.id )",
 			"this.locations = _locations.elts",//
 	})
 	@Modifies({ "this.vms",
@@ -133,9 +143,9 @@ public class DeclarativeCloud {
 			// Why this ? and not simply this.images.id ?
 			"Image.id",
 			//
-			"this.flavors",
+			"this.hardwares",
 			//
-			// "this.flavors.id",
+			"Hardware.id",
 			//
 			"this.locations",
 	// This one cannot be found ?!
@@ -145,12 +155,12 @@ public class DeclarativeCloud {
 	/**
 	 * Before calling init the object ImageImp, despite having it's id set, has no element in the relation Image__ID, so we need to force it somehow
 	 * @param _images
-	 * @param _flavors
+	 * @param _hardwares
 	 * @param _locations
 	 */
-	private void init(Set<Image> _images, Set<Hardware> _flavors,
+	private void init(Set<Image> _images, Set<Hardware> _hardwares,
 			Set<Location> _locations) {
-		Squander.exe(this, _images, _flavors, _locations);
+		Squander.exe(this, _images, _hardwares, _locations);
 	}
 
 	@Ensures("return.elts == this.images")
@@ -160,10 +170,10 @@ public class DeclarativeCloud {
 		return Squander.exe(this);
 	}
 
-	@Ensures("return.elts == this.flavors")
+	@Ensures("return.elts == this.hardwares")
 	@FreshObjects(cls = Set.class, typeParams = { Hardware.class }, num = 1)
 	@Modifies("return.elts")
-	public Set<Hardware> getAllFlavors() {
+	public Set<Hardware> getAllHardwares() {
 		return Squander.exe(this);
 	}
 
@@ -187,7 +197,7 @@ public class DeclarativeCloud {
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	@Requires({ "newNodeID !in @old(this.vms.id)",
 			//
-			"#this.images > 0", "#this.flavors > 0", "#this.locations > 0" })
+			"#this.images > 0", "#this.hardwares > 0", "#this.locations > 0" })
 	@Ensures({
 			/* Deploy the new node with given ID and RUNNING state */
 			// THIS ONE IS FAULTY + return?

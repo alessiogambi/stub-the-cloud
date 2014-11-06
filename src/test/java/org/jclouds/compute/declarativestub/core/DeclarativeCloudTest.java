@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
+import edu.mit.csail.sdg.squander.serializer.HardwareSer;
 import edu.mit.csail.sdg.squander.serializer.ImageSer;
 import edu.mit.csail.sdg.squander.serializer.special.ObjSerFactory;
 
@@ -47,6 +48,7 @@ public class DeclarativeCloudTest {
 	@BeforeClass
 	public static void injectObjectSerializers() {
 		ObjSerFactory.addSer(new ImageSer());
+		ObjSerFactory.addSer(new HardwareSer());
 	}
 
 	@BeforeMethod
@@ -55,7 +57,7 @@ public class DeclarativeCloudTest {
 		//
 				createDefaultImagesForTest(),
 				//
-				createDefaultFlavorsForTest(),
+				createDefaultHardwaresForTest(),
 				//
 				createDefaultLocationsForTest()
 		//
@@ -115,12 +117,12 @@ public class DeclarativeCloudTest {
 	}
 
 	@Test
-	public void testListFlavors() {
+	public void testListHardwares() {
 		System.out.println("DeclarativeCloudTest.testListFlavors() "
-				+ cloud.getAllFlavors());
+				+ cloud.getAllHardwares());
 
-		Assert.assertEquals(cloud.getAllFlavors(),
-				createDefaultFlavorsForTest());
+		Assert.assertEquals(cloud.getAllHardwares(),
+				createDefaultHardwaresForTest());
 	}
 
 	@Test
@@ -168,12 +170,12 @@ public class DeclarativeCloudTest {
 		return locations.build();
 	}
 
-	private Set<Hardware> createDefaultFlavorsForTest() {
+	private Set<Hardware> createDefaultHardwaresForTest() {
 		int id = 1;
 		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
 
 		flavors.add(new HardwareBuilder()
-				.ids("HW-" + id)
+				.ids("HW-" + id++)
 				.name("small")
 				.processors(ImmutableList.of(new Processor(1, 1.0)))
 				.ram(1740)
@@ -221,7 +223,7 @@ public class DeclarativeCloudTest {
 		// Only one image
 
 		Image image = createDefaultImagesForTest().iterator().next();
-		Hardware flavor = createDefaultFlavorsForTest().iterator().next();
+		Hardware flavor = createDefaultHardwaresForTest().iterator().next();
 		Location location = createDefaultLocationsForTest().iterator().next();
 
 		cloud = new DeclarativeCloud(//
