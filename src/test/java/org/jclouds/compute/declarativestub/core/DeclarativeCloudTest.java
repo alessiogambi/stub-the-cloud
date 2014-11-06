@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableSet.Builder;
 
 import edu.mit.csail.sdg.squander.serializer.HardwareSer;
 import edu.mit.csail.sdg.squander.serializer.ImageSer;
+import edu.mit.csail.sdg.squander.serializer.LocationSer;
 import edu.mit.csail.sdg.squander.serializer.special.ObjSerFactory;
 
 /**
@@ -49,6 +50,7 @@ public class DeclarativeCloudTest {
 	public static void injectObjectSerializers() {
 		ObjSerFactory.addSer(new ImageSer());
 		ObjSerFactory.addSer(new HardwareSer());
+		ObjSerFactory.addSer(new LocationSer());
 	}
 
 	@BeforeMethod
@@ -71,20 +73,12 @@ public class DeclarativeCloudTest {
 	}
 
 	@Test
-	public void testInitWithImages() {
-		// TODO There is a problem with init, the no solution comes for
-		// getAllImages()
-		// try {
-		// System.in.read();
-		// } catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		System.out.println("DeclarativeCloudTest.testInit() "
-				+ cloud.getAllImages());
-		// Assert.assertEquals(cloud.getAllImages().size(), this
-		// .createDefaultImagesForTest().size());
-
+	public void testInit() {
+		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest());
+		Assert.assertEquals(cloud.getAllHardwares(),
+				createDefaultHardwaresForTest());
+		Assert.assertEquals(cloud.getAllLocations(),
+				createDefaultLocationsForTest());
 	}
 
 	@Test

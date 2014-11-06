@@ -48,7 +48,8 @@ import edu.mit.csail.sdg.squander.Squander;
  */
 "hardwares : set org.jclouds.compute.domain.Hardware",
 /*
- * Location
+ * Location. This one can be implemented by different objects and this kind of
+ * create problems !
  */
 "locations : set org.jclouds.domain.Location" })
 // TODO Most of resources have same basic behavior (unique ID for example) can
@@ -81,7 +82,7 @@ public class DeclarativeCloud {
 	public String toString() {
 		return "IMAGES:" + this.getAllImages() + "\n"//
 				+ "LOCATIONS:" + this.getAllLocations() + "\n"//
-				+ "hardwares:" + this.getAllHardwares() + "\n"//
+				+ "HARDWARES:" + this.getAllHardwares() + "\n"//
 				+ "NODES:" + this.getAllNodes();
 	}
 

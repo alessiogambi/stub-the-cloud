@@ -1,4 +1,6 @@
 interface Location {
 
 	@SpecField("id : one String")	
+
+	@Invariant("this.id != null")
 }
