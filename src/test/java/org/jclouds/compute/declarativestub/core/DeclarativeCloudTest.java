@@ -1,6 +1,7 @@
 package org.jclouds.compute.declarativestub.core;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.jclouds.compute.domain.Hardware;
@@ -55,13 +56,14 @@ public class DeclarativeCloudTest {
 
 	@BeforeMethod
 	public void initializeCloud() {
+		Set<Location> defaultLocations = createDefaultLocationsForTest();
 		cloud = new DeclarativeCloud(
 		//
-				createDefaultImagesForTest(createDefaultLocationsForTest()),
+				createDefaultImagesForTest(defaultLocations),
 				//
-				createDefaultHardwaresForTest(),
+				createDefaultHardwaresForTest(defaultLocations),
 				//
-				createDefaultLocationsForTest()
+				defaultLocations
 		//
 		);
 	}
@@ -74,12 +76,44 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testInit() {
-		Assert.assertEquals(cloud.getAllImages(),
-				createDefaultImagesForTest(createDefaultLocationsForTest()));
-		Assert.assertEquals(cloud.getAllHardwares(),
-				createDefaultHardwaresForTest());
-		Assert.assertEquals(cloud.getAllLocations(),
-				createDefaultLocationsForTest());
+
+		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest(createDefaultLocationsForTest()));
+		Assert.assertEquals(cloud.getAllHardwares(), createDefaultHardwaresForTest(createDefaultLocationsForTest()));
+		Assert.assertEquals(cloud.getAllLocations(), createDefaultLocationsForTest());
+	}
+
+	@Test
+	public void testCannotCreateNodeWithMalformedInit() {
+		try {
+			// Split locations
+			Set<Location> originalLocations = createDefaultLocationsForTest();
+			Iterator<Location> i = originalLocations.iterator();
+			Location location1 = i.next();
+			Location location2 = i.next();
+
+			System.out.println("DeclarativeCloudTest.testMalformedInit() location 1 " + location1);
+			System.out.println("DeclarativeCloudTest.testMalformedInit() location 2 " + location2);
+
+			assert location1 != location2;
+
+			// Set 1 & Set 2 == empty
+			Set<Location> set1 = ImmutableSet.<Location> builder().add(location1).build();
+			Set<Location> set2 = ImmutableSet.<Location> builder().add(location2).build();
+
+			cloud = new DeclarativeCloud(createDefaultImagesForTest(set1),
+			//
+					createDefaultHardwaresForTest(set2),
+					//
+					originalLocations);
+
+			// This should fail !
+			cloud.createNode();
+			Assert.fail();
+		} catch (Exception e) {
+			e.printStackTrace();
+			Assert.assertNotNull(e.getMessage());
+			Assert.assertTrue(e.getMessage().contains("pre-condition is not satisfied"));
+		}
 	}
 
 	@Test
@@ -102,32 +136,26 @@ public class DeclarativeCloudTest {
 
 	public void testListImagesEmptyCloud() {
 		DeclarativeCloud c = new DeclarativeCloud();
-		System.out.println("DeclarativeCloudTest.testInit() "
-				+ c.getAllImages());
+		System.out.println("DeclarativeCloudTest.testInit() " + c.getAllImages());
 	}
 
 	@Test
 	public void testListImages() {
-		Assert.assertEquals(cloud.getAllImages(),
-				createDefaultImagesForTest(createDefaultLocationsForTest()));
+		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest(createDefaultLocationsForTest()));
 	}
 
 	@Test
 	public void testListHardwares() {
-		System.out.println("DeclarativeCloudTest.testListFlavors() "
-				+ cloud.getAllHardwares());
+		System.out.println("DeclarativeCloudTest.testListFlavors() " + cloud.getAllHardwares());
 
-		Assert.assertEquals(cloud.getAllHardwares(),
-				createDefaultHardwaresForTest());
+		Assert.assertEquals(cloud.getAllHardwares(), createDefaultHardwaresForTest(createDefaultLocationsForTest()));
 	}
 
 	@Test
 	public void testListLocations() {
-		System.out.println("DeclarativeCloudTest.testListLocations() "
-				+ cloud.getAllLocations());
+		System.out.println("DeclarativeCloudTest.testListLocations() " + cloud.getAllLocations());
 
-		Assert.assertEquals(cloud.getAllLocations(),
-				createDefaultLocationsForTest());
+		Assert.assertEquals(cloud.getAllLocations(), createDefaultLocationsForTest());
 	}
 
 	private Set<Image> createDefaultImagesForTest(Set<Location> locations) {
@@ -135,24 +163,14 @@ public class DeclarativeCloudTest {
 		// locations
 		Builder<Image> images = ImmutableSet.builder();
 		int id = 0;
-		Image image = new ImageBuilder()
-				.ids("IMAGE" + ++id)
-				.name("IMAGE" + id)
-				.location(locations.iterator().next())
-				.operatingSystem(
-						new OperatingSystem(OsFamily.LINUX, "desc", "version",
-								null, "desc", false)).description("desc")
-				.status(ImageStatus.AVAILABLE).build();
+		Image image = new ImageBuilder().ids("IMAGE" + ++id).name("IMAGE" + id).location(locations.iterator().next())
+				.operatingSystem(new OperatingSystem(OsFamily.LINUX, "desc", "version", null, "desc", false))
+				.description("desc").status(ImageStatus.AVAILABLE).build();
 
 		images.add(image);
 
-		image = new ImageBuilder()
-				.ids("IMAGE" + ++id)
-				.name("IMAGE" + id)
-				.location(locations.iterator().next())
-				.operatingSystem(
-						new OperatingSystem(OsFamily.WINDOWS, "desc",
-								"version", null, "desc", true))
+		image = new ImageBuilder().ids("IMAGE" + ++id).name("IMAGE" + id).location(locations.iterator().next())
+				.operatingSystem(new OperatingSystem(OsFamily.WINDOWS, "desc", "version", null, "desc", true))
 				.description("desc").status(ImageStatus.AVAILABLE).build();
 
 		images.add(image);
@@ -162,45 +180,28 @@ public class DeclarativeCloudTest {
 	private Set<Location> createDefaultLocationsForTest() {
 		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
 		int id = 1;
-		locations.add(new LocationBuilder().id("LOCATION-" + id++)
-				.description("Location-description").scope(LocationScope.ZONE)
-				.build());
-		locations.add(new LocationBuilder().id("LOCATION-" + id++)
-				.description("Another-Location-description")
+		locations.add(new LocationBuilder().id("LOCATION-" + id++).description("Location-description")
+				.scope(LocationScope.ZONE).build());
+		locations.add(new LocationBuilder().id("LOCATION-" + id++).description("Another-Location-description")
 				.scope(LocationScope.ZONE).build());
 		return locations.build();
 	}
 
-	private Set<Hardware> createDefaultHardwaresForTest() {
+	private Set<Hardware> createDefaultHardwaresForTest(Set<Location> locations) {
 		int id = 1;
 		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
 
-		flavors.add(new HardwareBuilder()
-				.ids("HW-" + id++)
-				.name("small")
-				.processors(ImmutableList.of(new Processor(1, 1.0)))
-				.ram(1740)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl((float) 160,
-								true, false))).build());
+		flavors.add(new HardwareBuilder().ids("HW-" + id++).name("small")
+				.processors(ImmutableList.of(new Processor(1, 1.0))).ram(1740).location(locations.iterator().next())
+				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 160, true, false))).build());
 
-		flavors.add(new HardwareBuilder()
-				.ids("HW-" + id++)
-				.name("medium")
-				.processors(ImmutableList.of(new Processor(4, 1.0)))
-				.ram(7680)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl((float) 850,
-								true, false))).build());
+		flavors.add(new HardwareBuilder().ids("HW-" + id++).name("medium")
+				.processors(ImmutableList.of(new Processor(4, 1.0))).ram(7680).location(locations.iterator().next())
+				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 850, true, false))).build());
 
-		flavors.add(new HardwareBuilder()
-				.ids("HW-" + id++)
-				.name("large")
-				.processors(ImmutableList.of(new Processor(8, 1.0)))
-				.ram(15360)
-				.volumes(
-						ImmutableList.<Volume> of(new VolumeImpl((float) 1690,
-								true, false))).build());
+		flavors.add(new HardwareBuilder().ids("HW-" + id++).name("large")
+				.processors(ImmutableList.of(new Processor(8, 1.0))).ram(15360).location(locations.iterator().next())
+				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 1690, true, false))).build());
 
 		return flavors.build();
 	}
@@ -213,8 +214,7 @@ public class DeclarativeCloudTest {
 			System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");
 		} catch (RuntimeException e) {
-			Assert.assertTrue(e.getMessage().contains(
-					"pre-condition is not satisfied"));
+			Assert.assertTrue(e.getMessage().contains("pre-condition is not satisfied"));
 		}
 
 	}
@@ -225,10 +225,10 @@ public class DeclarativeCloudTest {
 
 		Location location = createDefaultLocationsForTest().iterator().next();
 		// Force the use of the very same location (as set)
-		Image image = createDefaultImagesForTest(
-				ImmutableSet.<Location> builder().add(location).build())
+		Image image = createDefaultImagesForTest(ImmutableSet.<Location> builder().add(location).build()).iterator()
+				.next();
+		Hardware flavor = createDefaultHardwaresForTest(ImmutableSet.<Location> builder().add(location).build())
 				.iterator().next();
-		Hardware flavor = createDefaultHardwaresForTest().iterator().next();
 
 		cloud = new DeclarativeCloud(//
 				ImmutableSet.<Image> builder().add(image).build(),//
@@ -254,6 +254,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
 		// Assert SAME Location
 		Assert.assertEquals(n.getImage().getLocation(), n.getLocation());
+		Assert.assertEquals(n.getHardware().getLocation(), n.getLocation());
 	}
 
 	@Test
@@ -266,46 +267,35 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
 		// Assert SAME location
 		Assert.assertEquals(n.getImage().getLocation(), n.getLocation());
+		Assert.assertEquals(n.getHardware().getLocation(), n.getLocation());
 	}
 
 	@Test
 	public void testCreateAndListNode() {
-
-		System.out.println("\n\n\n " + cloud + " \n\n\n");
 		cloud.createNode();
 		Set<DeclarativeNode> nodes = cloud.getAllNodes();
-		System.out.println("DeclarativeCloudTest.testAddAndListNode() Nodes "
-				+ nodes);
+		System.out.println("DeclarativeCloudTest.testAddAndListNode() Nodes " + nodes);
 		Assert.assertEquals(nodes.size(), 1);
+
 	}
 
 	@Test
 	public void testCreateNodes() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();
-
-		System.out.println("DeclarativeCloudTest.testAddNodes() Node 1: " + n);
-		System.out.println("DeclarativeCloudTest.testAddNodes() Node 2: " + n1);
+		// Assert SAME location
+		Assert.assertEquals(n.getImage().getLocation(), n.getLocation());
+		Assert.assertEquals(n.getHardware().getLocation(), n.getLocation());
+		Assert.assertEquals(n1.getImage().getLocation(), n.getLocation());
+		Assert.assertEquals(n1.getHardware().getLocation(), n.getLocation());
 	}
-
-	// @Test
-	// public void testRemoveNode() {
-	// DeclarativeNode n = cloud.createNode();
-	// //
-	// cloud.removeNode(n);
-	// Set<DeclarativeNode> nodes = cloud.getAllNodes();
-	// System.out.println("DeclarativeCloudTest.testRemoveNode() Nodes"
-	// + nodes);
-	// Assert.assertTrue(nodes.size() == 0);
-	// }
 
 	@Test
 	public void testRemoveNodeByID() {
 		DeclarativeNode n = cloud.createNode();
 		cloud.removeNode(n.getId());
 		Set<DeclarativeNode> nodes = cloud.getAllNodes();
-		System.out.println("DeclarativeCloudTest.testRemoveNode() Nodes"
-				+ nodes);
+		System.out.println("DeclarativeCloudTest.testRemoveNode() Nodes" + nodes);
 		Assert.assertTrue(nodes.size() == 0);
 	}
 
@@ -398,8 +388,7 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testGetImage() {
-		String imageId = createDefaultImagesForTest(
-				createDefaultLocationsForTest()).iterator().next().getId();
+		String imageId = createDefaultImagesForTest(createDefaultLocationsForTest()).iterator().next().getId();
 
 		Image image = cloud.getImage(imageId);
 		// Assert ID
@@ -411,9 +400,7 @@ public class DeclarativeCloudTest {
 		try {
 			String wrongID = "";
 			Image i = cloud.getImage(wrongID);
-			System.out
-					.println("DeclarativeCloudTest.testGetImagePreCondFail() Wrong Image found "
-							+ i);
+			System.out.println("DeclarativeCloudTest.testGetImagePreCondFail() Wrong Image found " + i);
 			Assert.fail("Pre condition not wrong ?!");
 		} catch (RuntimeException e) {
 			if (e.getMessage() == null || "pre".indexOf(e.getMessage()) != -1) {
@@ -440,8 +427,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(n.getHardware(), _n.getHardware());
 	}
 
-	private boolean hasStatus(Set<DeclarativeNode> nodes, DeclarativeNode node,
-			NodeMetadataStatus status) {
+	private boolean hasStatus(Set<DeclarativeNode> nodes, DeclarativeNode node, NodeMetadataStatus status) {
 		for (DeclarativeNode n : nodes) {
 			if (node.getId() == n.getId()) {
 				return status.equals(n.getStatus());
@@ -485,9 +471,7 @@ public class DeclarativeCloudTest {
 		// Exec
 		Set<DeclarativeNode> nodes = cloud.getNodes(ids);
 
-		System.out
-				.println("DeclarativeCloudTest.testGetNodeBySetID() NODES BY ID "
-						+ nodes);
+		System.out.println("DeclarativeCloudTest.testGetNodeBySetID() NODES BY ID " + nodes);
 		// Check
 		Assert.assertTrue(containsID(nodes, n));
 		Assert.assertFalse(containsID(nodes, n1));
@@ -502,8 +486,7 @@ public class DeclarativeCloudTest {
 		//
 		cloud.suspendNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 	}
 
 	// TODO Depends on cloud.getNode() !
@@ -517,43 +500,30 @@ public class DeclarativeCloudTest {
 		//
 		cloud.suspendNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 		// Idempotence
 		cloud.suspendNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 
 		//
 		cloud.suspendNode(n1.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 		//
 		cloud.suspendNode(n2.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 
-		System.out.println("DeclarativeCloudTest.testSuspendOnlyTheNode() "
-				+ cloud.getAllNodes());
+		System.out.println("DeclarativeCloudTest.testSuspendOnlyTheNode() " + cloud.getAllNodes());
 	}
 
 	// TODO Depends on cloud.getNode() !
@@ -562,18 +532,15 @@ public class DeclarativeCloudTest {
 		DeclarativeNode n = cloud.createNode();
 		// WARNING: This test depends on the correctness of suspend !
 		cloud.suspendNode(n.getId());
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 		// Execution
 		cloud.startNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 		// Idempotence
 		cloud.startNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 	}
 
 	// TODO Depends on cloud.getNode() !
@@ -585,39 +552,27 @@ public class DeclarativeCloudTest {
 
 		// WARNING: This test depends on the correctness of suspend and get !
 		cloud.suspendNode(n.getId());
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 
 		// Execution
 		cloud.startNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 		// Idempotence
 		cloud.startNode(n.getId());
 		//
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 		// Act on the others
 		cloud.suspendNode(n1.getId());
 		cloud.suspendNode(n2.getId());
-		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(),
-				NodeMetadataStatus.RUNNING);
-		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
-		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(),
-				NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
+		Assert.assertEquals(cloud.getNode(n1.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n2.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 	}
 }
