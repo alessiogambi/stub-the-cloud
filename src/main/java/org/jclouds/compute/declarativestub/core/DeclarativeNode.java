@@ -12,8 +12,8 @@ import edu.mit.csail.sdg.annotations.Invariant;
 		/*
 		 * Make sure Node location is the same as Hardware and Image location
 		 */
-//		"this.location = this.image.location" //
-		})
+		"this.location = this.image.location" //
+})
 public class DeclarativeNode {
 
 	// TODO Add name

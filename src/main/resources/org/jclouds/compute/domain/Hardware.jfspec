@@ -1,7 +1,10 @@
 interface Hardware {
 
 	@SpecField("id : one String")
+	@SpecField("location : one org.jclouds.domain.Location" )
 
-	@Invariant("this.id != null")
-
+	@Invariant({
+		"this.id != null",
+		"this.location != null"
+	})
 }

@@ -59,7 +59,7 @@ import edu.mit.csail.sdg.squander.Squander;
 // INTO
 @Invariant({//
 /* All the VM must have unique ID */
-		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",//
+"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",//
 		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",//
 		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",//
 		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",//
@@ -85,8 +85,7 @@ public class DeclarativeCloud {
 				+ "NODES:" + this.getAllNodes();
 	}
 
-	public DeclarativeCloud(Set<Image> images, Set<Hardware> hardwares,
-			Set<Location> locations) {
+	public DeclarativeCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
 		init(images, hardwares, locations);
 	}
 
@@ -109,21 +108,23 @@ public class DeclarativeCloud {
 		return "" + currentId.incrementAndGet();
 	}
 
-	@Ensures({ "no this.vms", "no this.images", "no this.hardwares",
-			"no this.locations" })
+	@Ensures({ "no this.vms", "no this.images", "no this.hardwares", "no this.locations" })
 	@Modifies({ "this.vms", "this.images", "this.hardwares", "this.locations" })
 	private void init() {
 		Squander.exe(this);
 	}
 
-	@Requires({ //
-	"null ! in _images.elts",//
-			"null ! in _hardwares.elts",//
-			// Why does this not fail if 2 elements have the same id ?!
-			// Hardware.id ?!
-			// "all _hardwareA : _hardwares.elts | all _hardwareB : _hardwares.elts - _hardwareA | _hardwareA.id != _hardwareB.id ",//
-			"null ! in _locations.elts" //
-	})
+	/**
+	 * This is a strict version that requires all the constraints about location
+	 * and id to be satisfied. Alternatively one can simply "ask" for them to be
+	 * provided in the Ensures... The problem here is, can we update the
+	 * location/id stuff really ??
+	 * 
+	 */
+	@Requires({ /* Null Atoms are not Possible */
+	"null ! in _images.elts", "null ! in _hardwares.elts", "null ! in _locations.elts",
+			//
+			"_images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts", })
 	// Requires unique ID !
 	@Ensures({
 			"no this.vms", //
@@ -131,14 +132,17 @@ public class DeclarativeCloud {
 			// So we need to force it ? a = b means that the atom relation is
 			// the same not the instance of the object !
 			"this.images = _images.elts",//
-			"all image : this.images | one _image : _images.elts | ( image = _image & image.id = _image.id & image.location = _image.location)",
+			"all image : this.images | one _image : _images.elts | ( image = _image && image.id = _image.id && image.location = _image.location)",//
 			//
 			"this.hardwares = _hardwares.elts",//
-			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware & hardware.id = _hardware.id )",
+			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware && hardware.id = _hardware.id && hardware.location = _hardware.location )",
 			//
 			"this.locations = _locations.elts",//
-			//
-			"all location : this.locations | one _location : _locations.elts | ( location = _location & location.id = _location.id )",
+			"all location : this.locations | one _location : _locations.elts | ( location = _location && location.id = _location.id )",
+	//
+	// Image - Location
+	// "this.images.location in this.locations",
+	// Hardware - Location
 
 	})
 	@Modifies({ "this.vms",
@@ -149,7 +153,7 @@ public class DeclarativeCloud {
 			//
 			"this.hardwares",
 			//
-			"Hardware.id",
+			"Hardware.id", "Hardware.location",
 			//
 			"this.locations",
 			//
@@ -162,8 +166,7 @@ public class DeclarativeCloud {
 	 * @param _hardwares
 	 * @param _locations
 	 */
-	private void init(Set<Image> _images, Set<Hardware> _hardwares,
-			Set<Location> _locations) {
+	private void init(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
 		Squander.exe(this, _images, _hardwares, _locations);
 	}
 
@@ -201,7 +204,9 @@ public class DeclarativeCloud {
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	@Requires({ "newNodeID !in @old(this.vms.id)",
 			//
-			"#this.images > 0", "#this.hardwares > 0", "#this.locations > 0" })
+			"#this.images > 0", "#this.hardwares > 0", "#this.locations > 0",
+			/* Images and Hardware must share at least one location */
+			"# (this.images.location & this.hardwares.location) > 0" })
 	@Ensures({
 	/* Deploy the new node with given ID and RUNNING state */
 	"this.vms = @old(this.vms) + return",
@@ -219,15 +224,15 @@ public class DeclarativeCloud {
 	 * the location of the image ! (cannot do it in 3 steps ! image in images,
 	 * location in locations, image.location = location )
 	 */
-	"return.location = return.image.location",
+	"return.location = return.image.location && return.location = return.hardware.location",
 	/*
-	 * Pick one Hardware configuration
+	 * Pick one Hardware configuration.
 	 */
 	"return.hardware in this.hardwares", })
 	@Modifies({
 			"this.vms", //
-			"return.id", "return.image", "return.status", "return.location",
-			"return.image.location", "return.location", "return.hardware", //
+			"return.id", "return.image", "return.status", "return.location", "return.image.location",
+			"return.location", "return.hardware", "return.hardware.location"//
 	})
 	@Options(ensureAllInts = true, solveAll = true, bitwidth = 5)
 	public DeclarativeNode createNode(String newNodeID) {
@@ -254,8 +259,7 @@ public class DeclarativeCloud {
 	// I think this is mandatory since we are creating a new instance, but it is
 	// not really comfortable, isn't it ?
 	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location && return.hardware = vm.hardware")
-	@Modifies({ "return.id", "return.status", "return.image",
-			"return.location", "return.hardware" })
+	@Modifies({ "return.id", "return.status", "return.image", "return.location", "return.hardware" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id) {
 		return Squander.exe(this, _id);
