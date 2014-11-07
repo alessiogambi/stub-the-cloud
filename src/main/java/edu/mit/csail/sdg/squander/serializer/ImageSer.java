@@ -5,8 +5,10 @@ import java.util.List;
 
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
+import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.domain.Location;
 
+import ch.qos.logback.core.joran.spi.ConsoleTarget;
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
 import edu.mit.csail.sdg.squander.absstate.ObjTupleSet;
@@ -25,6 +27,7 @@ public class ImageSer implements IObjSer {
 
 	public static final String ID = "id";
 	public static final String LOCATION = "location";
+	public static final String STATUS = "status";
 
 	@Override
 	public boolean accepts(Class<?> clz) {
@@ -58,6 +61,7 @@ public class ImageSer implements IObjSer {
 		Image concreteObject = (Image) obj;
 		String id = concreteObject.getId();
 		Location location = concreteObject.getLocation();
+		ImageStatus status = concreteObject.getStatus();
 
 		// Store the relation ?
 		FieldValue idFvLen = new FieldValue(cls.findField(ID), 2);
@@ -68,10 +72,16 @@ public class ImageSer implements IObjSer {
 		locationFvLen.addTuple(new ObjTuple(obj, location));
 		result.add(locationFvLen);
 
+		FieldValue statusFvLen = new FieldValue(cls.findField(STATUS), 2);
+		statusFvLen.addTuple(new ObjTuple(obj, status));
+		result.add(statusFvLen);
+
 		Log.debug("ImageSer.absFunc() " + result);
 		return result;
 	}
 
+	// It seams that sometimes this concretize one field with another value...
+	// not sure why !
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
 		Log.debug("ImageSer.concrFunc() object " + obj);
@@ -82,13 +92,14 @@ public class ImageSer implements IObjSer {
 			return restoreID(obj, fieldValue);
 		} else if (LOCATION.equals(fldName)) {
 			return restoreLocation(obj, fieldValue);
+		} else if (STATUS.equals(fldName)) {
+			return restoreStatus(obj, fieldValue);
 		}
 
 		else if (!fieldValue.jfield().isPureAbstract()) {
 			return obj;
 		} else {
-			throw new RuntimeException("Unknown field name for Image class: "
-					+ fldName);
+			throw new RuntimeException("Unknown field name for Image class: " + fldName);
 		}
 	}
 
@@ -129,6 +140,26 @@ public class ImageSer implements IObjSer {
 				builder.location((Location) ot.get(1));
 			}
 
+			return builder.build();
+		} catch (Throwable e) {
+			e.printStackTrace();
+			throw new RuntimeException("Unknown error " + e.getMessage());
+		}
+
+	}
+
+	private Object restoreStatus(Object concreteObj, FieldValue fieldValue) {
+		try {
+			ObjTupleSet value = fieldValue.tupleSet();
+			// Note sure about this
+			assert value.arity() == 2;
+
+			Image image = (Image) concreteObj;
+			// Reset all the attributes
+			ImageBuilder builder = ImageBuilder.fromImage(image);
+			for (ObjTuple ot : value) {
+				builder.status((ImageStatus) ot.get(1));
+			}
 			return builder.build();
 		} catch (Throwable e) {
 			e.printStackTrace();

@@ -33,49 +33,56 @@ import edu.mit.csail.sdg.squander.Squander;
 // FIXME: if we do not provide any spec that uses NodeMetadata, this will result
 // in a clsSpec == null !
 @SpecField({
-/* All the VM deployed in the cloud */
-"vms : set DeclarativeNode",
-/*
- * Running VM
- */
-"running : set DeclarativeNode",
-/*
- * Disk Images
- */
-"images : set org.jclouds.compute.domain.Image",
-/*
- * Image hardwares, a.k.a., Hardware configuration
- */
-"hardwares : set org.jclouds.compute.domain.Hardware",
-/*
- * Location.
- */
-"locations : set org.jclouds.domain.Location" })
+		/*
+		 * All the VM deployed in the cloud
+		 */
+		"vms : set DeclarativeNode",
+		/*
+		 * Running VM
+		 */
+		"running : set DeclarativeNode from this.vms | this.running.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+		/*
+		 * Disk Images
+		 */
+		"images : set org.jclouds.compute.domain.Image",
+		/*
+		 * Available Images. Only available images can be started
+		 */
+		"available_images : set org.jclouds.compute.domain.Image from this.images | this.available_images.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE",
+		/*
+		 * Image hardwares, a.k.a., Hardware configuration
+		 */
+		"hardwares : set org.jclouds.compute.domain.Hardware",
+		/*
+		 * Location.
+		 */
+		"locations : set org.jclouds.domain.Location" })
 // TODO Most of resources have same basic behavior (unique ID for example) can
 // we abstract them into an abstract entity ?
 // Note that this should already be how the code is organized (ComputeService
 // Resources)
 // NOTE IF SOMETHING IS NOT MENTIONED HERE(like hardware.id) IT WILL NOT APPEAR
 // INTO
-@Invariant({//
-/* All the VM must have unique ID */
-"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",//
-		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",//
-		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",//
-		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",//
-		//
-		/* Null is not an option for Virtual Machines */
+@Invariant({/* All the Resources must have unique ID */
+		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",
+		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",
+		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",
+		/* Null is not an option for any Resource */
 		"no (null & this.vms)",
-		/* Running VM */
-		"this.running in this.vms",
-		/* This is only to avoid clsSpec ! */
-		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-		/* Null is not an option for Images */
 		"no (null & this.images)",
-		/* Null is not an option for Hardware */
 		"no (null & this.hardwares)",
-		/* Null is not an option for Location */
-		"no (null & this.locations)" })
+		"no (null & this.locations)",
+		/* Define Running VMs */
+		"this.running in this.vms",
+		/* This is only to avoid clsSpec on NodeMetadataStatus ! */
+		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+		/* Define Available Image */
+		"this.available_images in this.images",
+		/* This is only to avoid clsSpec on NodeMetadataStatus ! */
+		"all available_image : this.available_images | available_image.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE",
+
+})
 public class DeclarativeCloud {
 
 	public String toString() {
@@ -149,7 +156,7 @@ public class DeclarativeCloud {
 			//
 			"this.images",
 			// Why this ? and not simply this.images.id ?
-			"Image.id", "Image.location",
+			"Image.id", "Image.location", "Image.status",
 			//
 			"this.hardwares",
 			//
