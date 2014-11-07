@@ -1,5 +1,6 @@
 package org.jclouds.compute.declarativestub.core;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -76,7 +77,6 @@ public class DeclarativeCloudTest {
 
 	@Test
 	public void testInit() {
-
 		Assert.assertEquals(cloud.getAllImages(), createDefaultImagesForTest(createDefaultLocationsForTest()));
 		Assert.assertEquals(cloud.getAllHardwares(), createDefaultHardwaresForTest(createDefaultLocationsForTest()));
 		Assert.assertEquals(cloud.getAllLocations(), createDefaultLocationsForTest());
@@ -129,8 +129,10 @@ public class DeclarativeCloudTest {
 			cloud = new DeclarativeCloud();
 			cloud.createNode();
 			Assert.fail();
-		} catch (RuntimeException e) {
-			Assert.assertTrue(e.getMessage().contains("pre-condition"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			Assert.assertNotNull(e.getMessage());
+			Assert.assertTrue(e.getMessage().contains("pre-condition is not satisfied"));
 		}
 	}
 
@@ -172,8 +174,8 @@ public class DeclarativeCloudTest {
 		image = new ImageBuilder().ids("IMAGE" + ++id).name("IMAGE" + id).location(locations.iterator().next())
 				.operatingSystem(new OperatingSystem(OsFamily.WINDOWS, "desc", "version", null, "desc", true))
 				.description("desc").status(ImageStatus.AVAILABLE).build();
-
 		images.add(image);
+
 		return images.build();
 	}
 
@@ -209,36 +211,73 @@ public class DeclarativeCloudTest {
 	@Test
 	public void testFailCreateNodeIfNoImages() {
 		try {
-			DeclarativeCloud c = new DeclarativeCloud();
-			DeclarativeNode n = c.createNode();
+			cloud = new DeclarativeCloud();
+			DeclarativeNode n = cloud.createNode();
 			System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");
 		} catch (RuntimeException e) {
 			Assert.assertTrue(e.getMessage().contains("pre-condition is not satisfied"));
 		}
-
 	}
+
+	@Test
+	public void testFailCreateNodeIfNoAvailableImages() {
+		Location location = createDefaultLocationsForTest().iterator().next();
+		// Force the use of the very same location (as set)
+		Image nonAvailableImage = new ImageBuilder().ids("Non-Available-IMAGE").name("Non-Available-IMAGE")
+				.location(location)
+				.operatingSystem(new OperatingSystem(OsFamily.WINDOWS, "desc", "version", null, "desc", true))
+				.description("desc").status(ImageStatus.DELETED).build();
+
+		Hardware flavor = createDefaultHardwaresForTest(ImmutableSet.<Location> builder().add(location).build())
+				.iterator().next();
+
+		cloud = new DeclarativeCloud(//
+				ImmutableSet.<Image> builder().add(nonAvailableImage).build(),//
+				ImmutableSet.<Hardware> builder().add(flavor).build(),//
+				ImmutableSet.<Location> builder().add(location).build());
+
+		try {
+			DeclarativeNode n = cloud.createNode();
+			System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
+			Assert.fail("pre-condition is not satisfied not raised for non-available image !");
+		} catch (Exception e) {
+			e.printStackTrace();
+			Assert.assertNotNull(e.getMessage());
+			Assert.assertTrue(e.getMessage().contains("pre-condition is not satisfied"));
+		}
+	}
+
+	// image =
 
 	@Test
 	public void testCreateNodeWithImage() {
 		// Only one image
 
 		Location location = createDefaultLocationsForTest().iterator().next();
+
 		// Force the use of the very same location (as set)
 		Image image = createDefaultImagesForTest(ImmutableSet.<Location> builder().add(location).build()).iterator()
 				.next();
+
 		Hardware flavor = createDefaultHardwaresForTest(ImmutableSet.<Location> builder().add(location).build())
 				.iterator().next();
+
+		assert image.getLocation() == location;
+		assert flavor.getLocation() == location;
 
 		cloud = new DeclarativeCloud(//
 				ImmutableSet.<Image> builder().add(image).build(),//
 				ImmutableSet.<Hardware> builder().add(flavor).build(),//
 				ImmutableSet.<Location> builder().add(location).build());
 
-		// Assert.assertEquals(cloud.getAllImages().size(), 1);
+		Assert.assertEquals(cloud.getAllImages().size(), 1);
+		Assert.assertEquals(cloud.getAllImages().iterator().next().getLocation(), location);
+		Assert.assertEquals(cloud.getAllImages().iterator().next().getStatus(), ImageStatus.AVAILABLE);
 
-		// Exec
+		// Exec - No Preconditions
 		DeclarativeNode n = cloud.createNode();
+
 		Assert.assertNotNull(n);
 		Assert.assertEquals(n.getStatus(), NodeMetadataStatus.RUNNING);
 		// NOT SURE THE EQUALS IS FINE !

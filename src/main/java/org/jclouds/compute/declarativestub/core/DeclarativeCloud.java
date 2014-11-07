@@ -33,36 +33,32 @@ import edu.mit.csail.sdg.squander.Squander;
 // FIXME: if we do not provide any spec that uses NodeMetadata, this will result
 // in a clsSpec == null !
 @SpecField({
-		/*
-		 * All the VM deployed in the cloud
-		 */
-		"vms : set DeclarativeNode",
-		/*
-		 * Running VM
-		 */
-		"running : set DeclarativeNode from this.vms | this.running.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-		/*
-		 * Disk Images
-		 */
-		"images : set org.jclouds.compute.domain.Image",
-		/*
-		 * Available Images. Only available images can be started
-		 */
-		"available_images : set org.jclouds.compute.domain.Image from this.images | this.available_images.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE",
-		/*
-		 * Image hardwares, a.k.a., Hardware configuration
-		 */
-		"hardwares : set org.jclouds.compute.domain.Hardware",
-		/*
-		 * Location.
-		 */
-		"locations : set org.jclouds.domain.Location" })
-// TODO Most of resources have same basic behavior (unique ID for example) can
-// we abstract them into an abstract entity ?
-// Note that this should already be how the code is organized (ComputeService
-// Resources)
-// NOTE IF SOMETHING IS NOT MENTIONED HERE(like hardware.id) IT WILL NOT APPEAR
-// INTO
+/*
+ * All the VM deployed in the cloud
+ */
+"vms : set DeclarativeNode",
+/*
+ * Running VM
+ */
+"running : set DeclarativeNode from this.vms",
+/*
+ * Disk Images
+ */
+"images : set org.jclouds.compute.domain.Image", /*
+												 * I tried to add
+												 * available_images as subset of
+												 * images with a given status,
+												 * it did not worked as expected
+												 * ! It's tricky !
+												 */
+/*
+ * Image hardwares, a.k.a., Hardware configuration
+ */
+"hardwares : set org.jclouds.compute.domain.Hardware",
+/*
+ * Location.
+ */
+"locations : set org.jclouds.domain.Location" })
 @Invariant({/* All the Resources must have unique ID */
 		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
 		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",
@@ -74,15 +70,9 @@ import edu.mit.csail.sdg.squander.Squander;
 		"no (null & this.hardwares)",
 		"no (null & this.locations)",
 		/* Define Running VMs */
-		"this.running in this.vms",
+		// "this.running in this.vms",
 		/* This is only to avoid clsSpec on NodeMetadataStatus ! */
-		"all vm : this.running | vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-		/* Define Available Image */
-		"this.available_images in this.images",
-		/* This is only to avoid clsSpec on NodeMetadataStatus ! */
-		"all available_image : this.available_images | available_image.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE",
-
-})
+		"all vm : this.running | (vm in this.vms && vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)", })
 public class DeclarativeCloud {
 
 	public String toString() {
@@ -131,30 +121,28 @@ public class DeclarativeCloud {
 	@Requires({ /* Null Atoms are not Possible */
 	"null ! in _images.elts", "null ! in _hardwares.elts", "null ! in _locations.elts",
 			//
-			"_images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts", })
+			"_images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts" })
 	// Requires unique ID !
 	@Ensures({
+			/* No virtual machines are running */
 			"no this.vms", //
-			// This condition does not guarantees that images keep their ID //
-			// So we need to force it ? a = b means that the atom relation is
-			// the same not the instance of the object !
-			"this.images = _images.elts",//
-			"all image : this.images | one _image : _images.elts | ( image = _image && image.id = _image.id && image.location = _image.location)",//
+			// TODO Not sure on how to say we want to add all the same elements
+			// ...
+			"this.images = @old(this.images) + _images.elts",//
+			// "#this.images = #_images.elts",
+			// "all image : this.images | one _image : _images.elts | ( image = _image && image.id = _image.id && image.location = _image.location && image.status = _image.status)",//
+			//
 			//
 			"this.hardwares = _hardwares.elts",//
+			"#this.hardwares = #_hardwares.elts",//
 			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware && hardware.id = _hardware.id && hardware.location = _hardware.location )",
 			//
 			"this.locations = _locations.elts",//
-			"all location : this.locations | one _location : _locations.elts | ( location = _location && location.id = _location.id )",
-	//
-	// Image - Location
-	// "this.images.location in this.locations",
-	// Hardware - Location
-
-	})
+			"all location : this.locations | one _location : _locations.elts | ( location = _location && location.id = _location.id )" })
 	@Modifies({ "this.vms",
 			//
 			"this.images",
+			//
 			// Why this ? and not simply this.images.id ?
 			"Image.id", "Image.location", "Image.status",
 			//
@@ -206,14 +194,16 @@ public class DeclarativeCloud {
 		return Squander.exe(this, ids);
 	}
 
-	// TODO THis implementation does not force a specific image nor location, it
-	// is under spec to simplify the development !
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ "newNodeID !in @old(this.vms.id)",
+	@Requires({
+			"newNodeID !in @old(this.vms.id)",
+			// The invariant associated to this relation is broken !
+			"#(this.images.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE) > 0",
 			//
-			"#this.images > 0", "#this.hardwares > 0", "#this.locations > 0",
-			/* Images and Hardware must share at least one location */
-			"# (this.images.location & this.hardwares.location) > 0" })
+			"#this.hardwares > 0",
+			"#this.locations > 0",
+			/* Available Images and Hardware must share at least one location */
+			"some image : this.images | ( image.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && image.location in this.hardwares.location )" })
 	@Ensures({
 	/* Deploy the new node with given ID and RUNNING state */
 	"this.vms = @old(this.vms) + return",
@@ -225,7 +215,7 @@ public class DeclarativeCloud {
 	 * Node and Image connection: we do not care, but the image for the new node
 	 * must be one of the available one !!
 	 */
-	"return.image in this.images",
+	"return.image in this.images && return.image.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE",
 	/*
 	 * Assign the location of the node to be the one of the image, such that is
 	 * the location of the image ! (cannot do it in 3 steps ! image in images,
@@ -236,10 +226,15 @@ public class DeclarativeCloud {
 	 * Pick one Hardware configuration.
 	 */
 	"return.hardware in this.hardwares", })
-	@Modifies({
-			"this.vms", //
-			"return.id", "return.image", "return.status", "return.location", "return.image.location",
-			"return.location", "return.hardware", "return.hardware.location"//
+	@Modifies({ "this.vms", //
+			"return.id", //
+			"return.image",//
+			"return.image.location",//
+			"return.image.status",//
+			"return.status",//
+			"return.location",//
+			"return.hardware",//
+			"return.hardware.location"//
 	})
 	@Options(ensureAllInts = true, solveAll = true, bitwidth = 5)
 	public DeclarativeNode createNode(String newNodeID) {

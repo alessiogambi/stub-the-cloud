@@ -160,6 +160,7 @@ public class ImageSer implements IObjSer {
 			for (ObjTuple ot : value) {
 				builder.status((ImageStatus) ot.get(1));
 			}
+
 			return builder.build();
 		} catch (Throwable e) {
 			e.printStackTrace();
