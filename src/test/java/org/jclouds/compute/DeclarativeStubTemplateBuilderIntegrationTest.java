@@ -16,23 +16,44 @@
  */
 package org.jclouds.compute;
 
+import java.io.IOException;
 import java.util.Set;
 
 import org.jclouds.compute.internal.BaseTemplateBuilderLiveTest;
+import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableSet;
 
+import edu.mit.csail.sdg.squander.log.Log.Level;
+import edu.mit.csail.sdg.squander.options.SquanderGlobalOptions;
+
 @Test(groups = { "integration", "live" })
 public class DeclarativeStubTemplateBuilderIntegrationTest extends BaseTemplateBuilderLiveTest {
 
-   public DeclarativeStubTemplateBuilderIntegrationTest() {
-      provider = "declarative-stub";
-   }
+	public DeclarativeStubTemplateBuilderIntegrationTest() {
+		provider = "declarative-stub";
+		SquanderGlobalOptions.INSTANCE.log_level = Level.LOG;
+		SquanderGlobalOptions.INSTANCE.min_bitwidth = 10;
+		SquanderGlobalOptions.INSTANCE.noOverflow = true;
+	}
 
-   @Override
-   protected Set<String> getIso3166Codes() {
-      return ImmutableSet.<String> of();
-   }
+	@Override
+	protected Set<String> getIso3166Codes() {
+		return ImmutableSet.<String> of();
+	}
 
+	// @Override
+	// public void testCompareSizes() throws Exception {
+	// // TODO Auto-generated method stub
+	// // super.testCompareSizes();
+	// throw new SkipException("Problems with Preicates matchindg");
+	// }
+
+	@Override
+	public void testDefaultTemplateBuilder() throws IOException {
+		// TODO Auto-generated method stub
+		super.testDefaultTemplateBuilder();
+	}
 }

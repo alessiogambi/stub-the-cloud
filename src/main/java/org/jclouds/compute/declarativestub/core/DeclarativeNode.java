@@ -7,8 +7,8 @@ import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.annotations.Invariant;
 
-@Invariant({ "this.status != null", "this.id != null", "this.image != null",
-		"this.hardware != null", "this.location!= null",
+@Invariant({ "this.status != null", "this.id != null", "this.image != null", "this.hardware != null",
+		"this.location!= null",
 		/*
 		 * Make sure Node location is the same as Hardware and Image location
 		 */
@@ -20,14 +20,16 @@ public class DeclarativeNode {
 	// TODO Add group
 
 	public String toString() {
-		return "Node = " + "ID:" + getId() + " -- " + this.hashCode() + "\n"
-				+ "Location: " + getLocation() + "\n" //
+		return "Node = " + "ID:" + getId() + " -- " + this.hashCode() + "\n" + "Location: " + getLocation() + "\n" //
 				+ "Image: " + getImage() + "\n" //
 				+ "Hardware: " + getHardware() + "\n" //
 				+ "Status: " + getStatus() + "\n";
 	}
 
 	private String id;
+	private String name;
+	private String group;
+
 	private NodeMetadataStatus status;
 	private Image image;
 	private Location location;
@@ -71,5 +73,21 @@ public class DeclarativeNode {
 
 	public void setImage(Image image) {
 		this.image = image;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String group) {
+		this.group = group;
 	}
 }

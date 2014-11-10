@@ -1,6 +1,5 @@
 package org.jclouds.compute.declarativestub.core;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -34,9 +33,8 @@ import edu.mit.csail.sdg.squander.serializer.LocationSer;
 import edu.mit.csail.sdg.squander.serializer.special.ObjSerFactory;
 
 /**
- * Testing the Specifications of a generic cloud. {@link DeclarativeCloud} must
- * be bridged to jclouds using an adapter, which is the standard approach in
- * jclouds.
+ * Testing the Specifications of a generic cloud. {@link DeclarativeCloud} must be bridged to jclouds using an adapter,
+ * which is the standard approach in jclouds.
  * 
  * @author alessiogambi
  *
@@ -160,7 +158,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getAllLocations(), createDefaultLocationsForTest());
 	}
 
-	private Set<Image> createDefaultImagesForTest(Set<Location> locations) {
+	public static Set<Image> createDefaultImagesForTest(Set<Location> locations) {
 		// Note we need to guarantee that Images are registered in their
 		// locations
 		Builder<Image> images = ImmutableSet.builder();
@@ -179,7 +177,7 @@ public class DeclarativeCloudTest {
 		return images.build();
 	}
 
-	private Set<Location> createDefaultLocationsForTest() {
+	public static Set<Location> createDefaultLocationsForTest() {
 		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
 		int id = 1;
 		locations.add(new LocationBuilder().id("LOCATION-" + id++).description("Location-description")
@@ -189,7 +187,7 @@ public class DeclarativeCloudTest {
 		return locations.build();
 	}
 
-	private Set<Hardware> createDefaultHardwaresForTest(Set<Location> locations) {
+	public static Set<Hardware> createDefaultHardwaresForTest(Set<Location> locations) {
 		int id = 1;
 		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
 

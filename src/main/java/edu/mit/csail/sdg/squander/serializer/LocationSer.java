@@ -5,11 +5,11 @@ import java.util.List;
 
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationBuilder;
+import org.jclouds.domain.internal.LocationImpl;
 
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
 import edu.mit.csail.sdg.squander.absstate.ObjTupleSet;
-import edu.mit.csail.sdg.squander.log.Log;
 import edu.mit.csail.sdg.squander.serializer.special.IObjSer;
 import edu.mit.csail.sdg.squander.spec.ClassSpec;
 import edu.mit.csail.sdg.squander.spec.JavaScene;
@@ -36,7 +36,7 @@ public class LocationSer implements IObjSer {
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		Log.debug("LocationSer.absFunc() " + obj);
+		System.out.println("LocationSer.absFunc() " + obj);
 
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
@@ -49,14 +49,14 @@ public class LocationSer implements IObjSer {
 		FieldValue fvLen = new FieldValue(cls.findField(ID), 2);
 		fvLen.addTuple(new ObjTuple(obj, id));
 		result.add(fvLen);
-		Log.debug("LocationSer.absFunc() " + result);
+		System.out.println("LocationSer.absFunc() " + result);
 		return result;
 	}
 
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		Log.debug("LocationSer.concrFunc() object " + obj);
-		Log.debug("LocationSer.concrFunc() fieldValue " + fieldValue);
+		System.out.println("LocationSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
+		System.out.println("LocationSer.concrFunc() fieldValue " + fieldValue);
 		String fldName = fieldValue.jfield().name();
 		// TODO Check that the object is really an Location ?
 		if (ID.equals(fldName)) {
@@ -64,8 +64,7 @@ public class LocationSer implements IObjSer {
 		} else if (!fieldValue.jfield().isPureAbstract()) {
 			return obj;
 		} else {
-			throw new RuntimeException(
-					"Unknown field name for Location class: " + fldName);
+			throw new RuntimeException("Unknown field name for Location class: " + fldName);
 		}
 	}
 
@@ -76,14 +75,13 @@ public class LocationSer implements IObjSer {
 
 			assert value.arity() == 2;
 
-			Location location = (Location) concreteObj;
+			LocationImpl location = (LocationImpl) concreteObj;
 			// Reset all the attributes
-			LocationBuilder builder = LocationBuilder.fromLocation(location);
 			for (ObjTuple ot : value) {
-				builder.id(ot.get(1).toString());
+				location.setId((String) ot.get(1));
 			}
 
-			return builder.build();
+			return location;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown error " + e.getMessage());
