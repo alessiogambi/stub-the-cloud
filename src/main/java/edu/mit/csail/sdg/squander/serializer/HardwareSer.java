@@ -4,7 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.jclouds.compute.domain.Hardware;
-import org.jclouds.compute.domain.HardwareBuilder;
+import org.jclouds.compute.domain.internal.HardwareImpl;
 import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
@@ -81,8 +81,7 @@ public class HardwareSer implements IObjSer {
 		} else if (!fieldValue.jfield().isPureAbstract()) {
 			return obj;
 		} else {
-			throw new RuntimeException(
-					"Unknown field name for Hardware class: " + fldName);
+			throw new RuntimeException("Unknown field name for Hardware class: " + fldName);
 		}
 	}
 
@@ -93,14 +92,12 @@ public class HardwareSer implements IObjSer {
 
 			assert value.arity() == 2;
 
-			Hardware hardware = (Hardware) concreteObj;
+			HardwareImpl hardware = (HardwareImpl) concreteObj;
 			// Reset all the attributes
-			HardwareBuilder builder = HardwareBuilder.fromHardware(hardware);
 			for (ObjTuple ot : value) {
-				builder.id(ot.get(1).toString());
+				hardware.setId((String) ot.get(1));
 			}
-
-			return builder.build();
+			return hardware;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown error " + e.getMessage());
@@ -116,14 +113,13 @@ public class HardwareSer implements IObjSer {
 			// Note sure about this
 			assert value.arity() == 2;
 
-			Hardware hardware = (Hardware) concreteObj;
+			HardwareImpl hardware = (HardwareImpl) concreteObj;
 			// Reset all the attributes
-			HardwareBuilder builder = HardwareBuilder.fromHardware(hardware);
 			for (ObjTuple ot : value) {
-				builder.location((Location) ot.get(1));
+				hardware.setLocation((Location) ot.get(1));
 			}
 
-			return builder.build();
+			return hardware;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown error " + e.getMessage());

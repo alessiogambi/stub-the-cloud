@@ -49,15 +49,6 @@
 			<version>1.0.13</version>
 		</dependency>
 
-		<!-- Add SQUANDER local dependencies -->
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>squander</groupId>
-			<scope>system</scope>
-			<version>2.0</version>
-			<systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath>
-		</dependency>
-
 		<dependency>
 			<artifactId>mit.squander</artifactId>
 			<groupId>forge</groupId>

@@ -4,15 +4,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.ImageStatus;
+import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.domain.Location;
 
-import ch.qos.logback.core.joran.spi.ConsoleTarget;
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
 import edu.mit.csail.sdg.squander.absstate.ObjTupleSet;
-import edu.mit.csail.sdg.squander.log.Log;
 import edu.mit.csail.sdg.squander.serializer.special.IObjSer;
 import edu.mit.csail.sdg.squander.spec.ClassSpec;
 import edu.mit.csail.sdg.squander.spec.JavaScene;
@@ -53,7 +51,7 @@ public class ImageSer implements IObjSer {
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		Log.debug("ImageSer.absFunc() " + obj.getClass() + "@" + obj.hashCode());
+		System.out.println("ImageSer.absFunc() " + obj.getClass() + "@" + obj.hashCode());
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
 
@@ -63,20 +61,30 @@ public class ImageSer implements IObjSer {
 		Location location = concreteObject.getLocation();
 		ImageStatus status = concreteObject.getStatus();
 
-		// Store the relation ?
-		FieldValue idFvLen = new FieldValue(cls.findField(ID), 2);
-		idFvLen.addTuple(new ObjTuple(obj, id));
-		result.add(idFvLen);
+		try {
+			FieldValue idFvLen = new FieldValue(cls.findField(ID), 2);
+			idFvLen.addTuple(new ObjTuple(obj, id));
+			result.add(idFvLen);
+		} catch (Throwable e) {
+			// TODO
+		}
+		try {
+			FieldValue locationFvLen = new FieldValue(cls.findField(LOCATION), 2);
+			locationFvLen.addTuple(new ObjTuple(obj, location));
+			result.add(locationFvLen);
+		} catch (Throwable e) {
+			// TODO
+		}
 
-		FieldValue locationFvLen = new FieldValue(cls.findField(LOCATION), 2);
-		locationFvLen.addTuple(new ObjTuple(obj, location));
-		result.add(locationFvLen);
+		try {
+			FieldValue statusFvLen = new FieldValue(cls.findField(STATUS), 2);
+			statusFvLen.addTuple(new ObjTuple(obj, status));
+			result.add(statusFvLen);
+		} catch (Throwable e) {
+			// TODO
+		}
 
-		FieldValue statusFvLen = new FieldValue(cls.findField(STATUS), 2);
-		statusFvLen.addTuple(new ObjTuple(obj, status));
-		result.add(statusFvLen);
-
-		Log.debug("ImageSer.absFunc() " + result);
+		System.out.println("ImageSer.absFunc() " + result);
 		return result;
 	}
 
@@ -84,23 +92,28 @@ public class ImageSer implements IObjSer {
 	// not sure why !
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		Log.debug("ImageSer.concrFunc() object " + obj);
-		Log.debug("ImageSer.concrFunc() fieldValue " + fieldValue);
+		System.out.println("ImageSer.concrFunc() object " + obj);
+		System.out.println("ImageSer.concrFunc() fieldValue " + fieldValue);
 		String fldName = fieldValue.jfield().name();
+
+		Object result = null;
 		// TODO Check that the object is really an Image ?
 		if (ID.equals(fldName)) {
-			return restoreID(obj, fieldValue);
+			result = restoreID(obj, fieldValue);
 		} else if (LOCATION.equals(fldName)) {
-			return restoreLocation(obj, fieldValue);
+			result = restoreLocation(obj, fieldValue);
 		} else if (STATUS.equals(fldName)) {
-			return restoreStatus(obj, fieldValue);
+			result = restoreStatus(obj, fieldValue);
 		}
 
 		else if (!fieldValue.jfield().isPureAbstract()) {
-			return obj;
+			result = obj;
 		} else {
 			throw new RuntimeException("Unknown field name for Image class: " + fldName);
 		}
+
+		System.out.println("ImageSer.concrFunc() Resulting object:\n" + result + "\n old object \n" + obj);
+		return obj;
 	}
 
 	// Not sure this is really ok !
@@ -110,14 +123,15 @@ public class ImageSer implements IObjSer {
 
 			assert value.arity() == 2;
 
-			Image image = (Image) concreteObj;
+			ImageImpl image = (ImageImpl) concreteObj;
 			// Reset all the attributes
-			ImageBuilder builder = ImageBuilder.fromImage(image);
+			// ImageBuilder builder = ImageBuilder.fromImage(image);
 			for (ObjTuple ot : value) {
-				builder.id(ot.get(1).toString());
+				// builder.id(ot.get(1).toString());
+				image.setId((String) ot.get(1));
 			}
 
-			return builder.build();
+			return image;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown error " + e.getMessage());
@@ -133,14 +147,12 @@ public class ImageSer implements IObjSer {
 			// Note sure about this
 			assert value.arity() == 2;
 
-			Image image = (Image) concreteObj;
+			ImageImpl image = (ImageImpl) concreteObj;
 			// Reset all the attributes
-			ImageBuilder builder = ImageBuilder.fromImage(image);
 			for (ObjTuple ot : value) {
-				builder.location((Location) ot.get(1));
+				image.setLocation((Location) ot.get(1));
 			}
-
-			return builder.build();
+			return image;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown error " + e.getMessage());
@@ -154,14 +166,12 @@ public class ImageSer implements IObjSer {
 			// Note sure about this
 			assert value.arity() == 2;
 
-			Image image = (Image) concreteObj;
-			// Reset all the attributes
-			ImageBuilder builder = ImageBuilder.fromImage(image);
+			ImageImpl image = (ImageImpl) concreteObj;
 			for (ObjTuple ot : value) {
-				builder.status((ImageStatus) ot.get(1));
+				image.setStatus((ImageStatus) ot.get(1));
 			}
 
-			return builder.build();
+			return image;
 		} catch (Throwable e) {
 			e.printStackTrace();
 			throw new RuntimeException("Unknown error " + e.getMessage());

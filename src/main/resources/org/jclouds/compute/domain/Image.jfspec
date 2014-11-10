@@ -1,11 +1,7 @@
 interface Image {
 
-	@SpecField("id : one String" )
-	@SpecField("location : one org.jclouds.domain.Location" )
+	@SpecField("id : one String")
 	@SpecField("status : one org.jclouds.compute.domain.ImageStatus")
-	@Invariant({
-		"this.id != null",
-		"this.location != null",
-		"this.status != null"
-	})
+	@SpecField("location : one org.jclouds.domain.Location")
+
 }

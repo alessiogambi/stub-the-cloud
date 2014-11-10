@@ -9,330 +9,60 @@ package org.jclouds.compute.declarativestub.core;
 // Object[]{name, email});
 // }
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
-import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;
 import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
-import edu.mit.csail.sdg.annotations.Options;
 import edu.mit.csail.sdg.annotations.Requires;
 import edu.mit.csail.sdg.annotations.SpecField;
 import edu.mit.csail.sdg.squander.Squander;
 
-/**
- * This abstract class contains some of the specifications of a generic cloud
- * 
- * @author alessiogambi
- *
- */
-// FIXME: if we do not provide any spec that uses NodeMetadata, this will result
-// in a clsSpec == null !
-@SpecField({
-/*
- * All the VM deployed in the cloud
- */
-"vms : set DeclarativeNode",
-/*
- * Running VM
- */
-"running : set DeclarativeNode from this.vms",
-/*
- * Disk Images
- */
-"images : set org.jclouds.compute.domain.Image", /*
-												 * I tried to add
-												 * available_images as subset of
-												 * images with a given status,
-												 * it did not worked as expected
-												 * ! It's tricky !
-												 */
-/*
- * Image hardwares, a.k.a., Hardware configuration
- */
-"hardwares : set org.jclouds.compute.domain.Hardware",
-/*
- * Location.
- */
-"locations : set org.jclouds.domain.Location" })
-@Invariant({/* All the Resources must have unique ID */
-		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",
-		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",
-		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",
-		/* Null is not an option for any Resource */
-		"no (null & this.vms)",
-		"no (null & this.images)",
-		"no (null & this.hardwares)",
-		"no (null & this.locations)",
-		/* Define Running VMs */
-		// "this.running in this.vms",
-		/* This is only to avoid clsSpec on NodeMetadataStatus ! */
-		"all vm : this.running | (vm in this.vms && vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)", })
+@SpecField({ "vms : set DeclarativeNode", "images : set org.jclouds.compute.domain.Image" })
+@Invariant({ "all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
+		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id" })
 public class DeclarativeCloud {
 
-	public String toString() {
-		return "IMAGES:" + this.getAllImages() + "\n"//
-				+ "LOCATIONS:" + this.getAllLocations() + "\n"//
-				+ "HARDWARES:" + this.getAllHardwares() + "\n"//
-				+ "NODES:" + this.getAllNodes();
+	public DeclarativeCloud(Set<Image> images) {
+		init(images);
 	}
 
-	public DeclarativeCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
-		init(images, hardwares, locations);
-	}
-
-	public DeclarativeCloud() {
-		init();
-	}
-
-	/* NON ANNOTATED VERSION */
-	public DeclarativeNode createNode() {
-		return createNode(allocateID());
-	}
-
-	/*
-	 * Since it is not possible to create random strings we use a generative
-	 * naive approach
-	 */
-	final static private AtomicInteger currentId = new AtomicInteger();
-
-	public static String allocateID() {
-		return "" + currentId.incrementAndGet();
-	}
-
-	@Ensures({ "no this.vms", "no this.images", "no this.hardwares", "no this.locations" })
-	@Modifies({ "this.vms", "this.images", "this.hardwares", "this.locations" })
-	private void init() {
-		Squander.exe(this);
-	}
-
-	/**
-	 * This is a strict version that requires all the constraints about location
-	 * and id to be satisfied. Alternatively one can simply "ask" for them to be
-	 * provided in the Ensures... The problem here is, can we update the
-	 * location/id stuff really ??
-	 * 
-	 */
-	@Requires({ /* Null Atoms are not Possible */
-	"null ! in _images.elts", "null ! in _hardwares.elts", "null ! in _locations.elts",
-			//
-			"_images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts" })
-	// Requires unique ID !
-	@Ensures({
-			/* No virtual machines are running */
-			"no this.vms", //
-			// TODO Not sure on how to say we want to add all the same elements
-			// ...
-			"this.images = @old(this.images) + _images.elts",//
-			// "#this.images = #_images.elts",
-			// "all image : this.images | one _image : _images.elts | ( image = _image && image.id = _image.id && image.location = _image.location && image.status = _image.status)",//
-			//
-			//
-			"this.hardwares = _hardwares.elts",//
-			"#this.hardwares = #_hardwares.elts",//
-			"all hardware : this.hardwares | one _hardware : _hardwares.elts | ( hardware = _hardware && hardware.id = _hardware.id && hardware.location = _hardware.location )",
-			//
-			"this.locations = _locations.elts",//
-			"all location : this.locations | one _location : _locations.elts | ( location = _location && location.id = _location.id )" })
-	@Modifies({ "this.vms",
-			//
-			"this.images",
-			//
-			// Why this ? and not simply this.images.id ?
-			"Image.id", "Image.location", "Image.status",
-			//
-			"this.hardwares",
-			//
-			"Hardware.id", "Hardware.location",
-			//
-			"this.locations",
-			//
-			"Location.id" //
+	@Requires({ 
+//			"some _images.elts",
+			// This is to require that the invariants are ok also before !
+//			"all i : _images.elts | i.id != null && i.status != null && i.location != null",
+//			"all i : _images.elts | all j : _images.elts - i | i.id !=  j.id", 
 	})
-	@Options(ensureAllInts = true, solveAll = true)
-	/**
-	 * Before calling init the object ImageImp, despite having it's id set, has no element in the relation Image__ID, so we need to force it somehow
-	 * @param _images
-	 * @param _hardwares
-	 * @param _locations
-	 */
-	private void init(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
-		Squander.exe(this, _images, _hardwares, _locations);
-	}
-
-	@Ensures("return.elts == this.images")
-	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<Image> getAllImages() {
-		return Squander.exe(this);
-	}
-
-	@Ensures("return.elts == this.hardwares")
-	@FreshObjects(cls = Set.class, typeParams = { Hardware.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<Hardware> getAllHardwares() {
-		return Squander.exe(this);
-	}
-
-	@Ensures("return.elts == this.vms")
-	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<DeclarativeNode> getAllNodes() {
-		return Squander.exe(this);
-	}
-
-	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
-	@Requires("ids.elts in this.vms.id")
-	@Modifies("return.elts")
-	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
-	public Set<DeclarativeNode> getNodes(Set<String> ids) {
-		return Squander.exe(this, ids);
-	}
-
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({
-			"newNodeID !in @old(this.vms.id)",
-			// The invariant associated to this relation is broken !
-			"#(this.images.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE) > 0",
-			//
-			"#this.hardwares > 0",
-			"#this.locations > 0",
-			/* Available Images and Hardware must share at least one location */
-			"some image : this.images | ( image.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && image.location in this.hardwares.location )" })
-	@Ensures({
-	/* Deploy the new node with given ID and RUNNING state */
-	"this.vms = @old(this.vms) + return",
-	/* Maintain ID */
-	"return.id = newNodeID",
-	/* Start VM as RUNNING */
-	"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-	/*
-	 * Node and Image connection: we do not care, but the image for the new node
-	 * must be one of the available one !!
-	 */
-	"return.image in this.images && return.image.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE",
-	/*
-	 * Assign the location of the node to be the one of the image, such that is
-	 * the location of the image ! (cannot do it in 3 steps ! image in images,
-	 * location in locations, image.location = location )
-	 */
-	"return.location = return.image.location && return.location = return.hardware.location",
-	/*
-	 * Pick one Hardware configuration.
-	 */
-	"return.hardware in this.hardwares", })
-	@Modifies({ "this.vms", //
-			"return.id", //
-			"return.image",//
-			"return.image.location",//
-			"return.image.status",//
-			"return.status",//
-			"return.location",//
-			"return.hardware",//
-			"return.hardware.location"//
+	// Same Elements, same relations !
+	@Ensures({ "no this.vms",//
+			"this.images = _images.elts",// Note that this work as long as we do not introduce invariants !
 	})
-	@Options(ensureAllInts = true, solveAll = true, bitwidth = 5)
-	public DeclarativeNode createNode(String newNodeID) {
-		return Squander.exe(this, newNodeID);
+	@Modifies({ "this.vms",// /
+			"this.images" })
+	private void init(Set<Image> _images) {
+		Squander.exe(this, _images);
 	}
 
-	@Requires({
-			// At least one VM
-			"some this.vms",
-			// The node to stop must be in the running nodes
-			"_id in this.vms.id" })
-	@Ensures({ "_id !in this.vms.id && #this.vms = #@old(this.vms) - 1" })
-	@Modifies({ "this.vms", })
-	public void removeNode(String _id) {
-		Squander.exe(this, _id);
-	}
-
-	@Requires({
-			// At least one VM
-			"some this.vms",
-			// The node must be in the running nodes
-			"return.id in this.vms.id" })
-	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	// I think this is mandatory since we are creating a new instance, but it is
-	// not really comfortable, isn't it ?
-	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location && return.hardware = vm.hardware")
-	@Modifies({ "return.id", "return.status", "return.image", "return.location", "return.hardware" })
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	public DeclarativeNode getNode(String _id) {
-		return Squander.exe(this, _id);
-	}
-
-	@Requires({
-			// At least one VM
-			"#this.images > 0",
-			// The node must be in the running nodes
-			"_id in this.images.id" })
-	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	@Ensures("one image : this.images | image.id=_id && return.id = image.id")
-	public Image getImage(String _id) {
-		return Squander.exe(this, _id);
-	}
-
-	@Requires({
-			// At least one VM
-			"some this.vms",
-			// The node must exist
-			"one vm : this.vms | vm.id == _id" })
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)" })
-	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
-	/**
-	 * This call is idempotent
-	 * @param _id
-	 */
-	public void startNode(String _id) {
-		// TODO: by changing the state we change the running/stopped relation,
-		// but we do not declare them as "mofiable"
-		Squander.exe(this, _id);
-	}
-
-	@Requires({
-			// At least one VM
-			"some this.vms",
-			// The node must exist
-			"one vm : this.vms | vm.id == _id" })
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED )" })
-	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
-	/**
-	 * This call is idempotent
-	 * @param _id
-	 */
-	public void suspendNode(String _id) {
-		Squander.exe(this, _id);
-	}
-
-	@Ensures("return.elts == this.locations")
-	@FreshObjects(cls = Set.class, typeParams = { Location.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<Location> getAllLocations() {
+	@FreshObjects(num = 1, cls = Set.class, typeParams = { Image.class })
+	@Ensures({ "return.elts == this.images" })
+	@Modifies({ "return.elts" })
+	public Set<Image> getImages() {
 		return Squander.exe(this);
 	}
+	// java.lang.AssertionError: can't add spec field after calling finish(): DECLARATION:
+	// "elts   : set (org.jclouds.compute.domain.Image)"
 
-	// /*
-	// * IMAGE MANAGEMENT: not required for "pure" ComputeService scenario
-	// */
-	// public void addImage(Image i) {
-	// addImage(i, allocateID());
-	// }
-	//
-	// ALAS with do not access the ID element the Image.sfspec are not used !
-	// @Ensures({ "this.images = @old(this.images) + i",//
-	// "i.imageID = _id" })
-	// @Modifies({ "this.images", "i.imageID" })
-	// public void addImage(Image i, String _id) {
-	// Squander.exe(this, i, _id);
-	// }
-	//
-	// /*
-	// * HARDWARE MANAGEMENT: not required for "pure" ComputeService scenario
-	// */
+	// If use the invariant: @Invariant("this.id != null") inside Image.jfspec it will not find any solution ! Why so ?
+	// If use the invariant: @Invariant("this.status != null") inside Image.jfspec it will not find any solution ! Why
+	// so ?
+	// If use the invariant: @Invariant("this.id != null") inside Location.jfspec it will not find any solution for the
+	// initialization ! Why so
+	// ?
+	// If use the invariant: @Invariant("this.id != null") inside Image.jfspec it will not find any solution ! Why so ?
+
+	// I think that the difficulty is understanding the JavaScene, it seems that we need to mention all the elements
+	// that we are using inside the spec somewhere !!
+
 }
