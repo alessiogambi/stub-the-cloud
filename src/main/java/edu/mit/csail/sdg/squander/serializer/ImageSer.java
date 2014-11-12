@@ -11,6 +11,7 @@ import org.jclouds.domain.Location;
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
 import edu.mit.csail.sdg.squander.absstate.ObjTupleSet;
+import edu.mit.csail.sdg.squander.log.Log;
 import edu.mit.csail.sdg.squander.serializer.special.IObjSer;
 import edu.mit.csail.sdg.squander.spec.ClassSpec;
 import edu.mit.csail.sdg.squander.spec.JavaScene;
@@ -51,7 +52,7 @@ public class ImageSer implements IObjSer {
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		System.out.println("ImageSer.absFunc() " + obj.getClass() + "@" + obj.hashCode());
+		Log.debug("ImageSer.absFunc() " + obj.getClass() + "@" + obj.hashCode());
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
 
@@ -85,7 +86,7 @@ public class ImageSer implements IObjSer {
 			System.err.println("ImageSer.absFunc() Missing " + STATUS);
 		}
 
-		System.out.println("ImageSer.absFunc() " + result);
+		Log.debug("ImageSer.absFunc() " + result);
 		return result;
 	}
 
@@ -93,8 +94,8 @@ public class ImageSer implements IObjSer {
 	// not sure why !
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		System.out.println("ImageSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
-		System.out.println("ImageSer.concrFunc() fieldValue " + fieldValue);
+		Log.debug("ImageSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
+		Log.debug("ImageSer.concrFunc() fieldValue " + fieldValue);
 		String fldName = fieldValue.jfield().name();
 		// TODO Check that the object is really an Image ?
 		if (ID.equals(fldName)) {
@@ -121,7 +122,7 @@ public class ImageSer implements IObjSer {
 
 			ImageImpl image = (ImageImpl) concreteObj;
 			// Reset all the attributes
-			System.out.println("ImageSer.restoreID() Reset : " + value.size());
+			Log.debug("ImageSer.restoreID() Reset : " + value.size());
 			for (ObjTuple ot : value) {
 				image.setId((String) ot.get(1));
 			}

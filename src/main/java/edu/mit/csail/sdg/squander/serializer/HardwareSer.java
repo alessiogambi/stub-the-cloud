@@ -10,6 +10,7 @@ import org.jclouds.domain.Location;
 import edu.mit.csail.sdg.squander.absstate.FieldValue;
 import edu.mit.csail.sdg.squander.absstate.ObjTuple;
 import edu.mit.csail.sdg.squander.absstate.ObjTupleSet;
+import edu.mit.csail.sdg.squander.log.Log;
 import edu.mit.csail.sdg.squander.serializer.special.IObjSer;
 import edu.mit.csail.sdg.squander.spec.ClassSpec;
 import edu.mit.csail.sdg.squander.spec.JavaScene;
@@ -45,7 +46,7 @@ public class HardwareSer implements IObjSer {
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		System.out.println("HardwareSer.absFunc() " + obj.getClass() + "@" + obj.hashCode());
+		Log.debug("HardwareSer.absFunc() " + obj.getClass() + "@" + obj.hashCode());
 
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
@@ -64,14 +65,14 @@ public class HardwareSer implements IObjSer {
 		locationFvLen.addTuple(new ObjTuple(obj, location));
 		result.add(locationFvLen);
 
-		System.out.println("HardwareSer.absFunc() " + result);
+		Log.debug("HardwareSer.absFunc() " + result);
 		return result;
 	}
 
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		System.out.println("HardwareSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
-		System.out.println("HardwareSer.concrFunc() fieldValue " + fieldValue);
+		Log.debug("HardwareSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
+		Log.debug("HardwareSer.concrFunc() fieldValue " + fieldValue);
 		String fldName = fieldValue.jfield().name();
 		// TODO Check that the object is really an Hardware ?
 		if (ID.equals(fldName)) {
