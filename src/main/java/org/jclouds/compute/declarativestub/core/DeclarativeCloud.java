@@ -17,7 +17,6 @@ import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;
-import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
 import edu.mit.csail.sdg.annotations.Options;
 import edu.mit.csail.sdg.annotations.Requires;
@@ -25,57 +24,53 @@ import edu.mit.csail.sdg.annotations.SpecField;
 import edu.mit.csail.sdg.squander.Squander;
 
 /**
- * This abstract class contains some of the specifications of a generic cloud
+ * Try to mix imperative and declarative programming to define a basic stub of the ComputeService of a cloud
  * 
  * @author alessiogambi
  *
  */
-// FIXME: if we do not provide any spec that uses NodeMetadata, this will result
-// in a clsSpec == null !
 @SpecField({
 /*
- * All the VM deployed in the cloud
+ * All the Instances deployed in the cloud. This form the Spec field of the ComputeService. The other elements are
+ * concrete instances that will/must not change, in a sense they form the universe for the cloud !
  */
-"vms : set DeclarativeNode",
+"instances : set DeclarativeNode",
 /*
- * Running VM
+ * All the Disk Images defined for the cloud
  */
-"running : set DeclarativeNode from this.vms",
+// "images : set org.jclouds.compute.domain.Image",
 /*
- * Disk Images
+ * All the Hardware configuration (a.k.a Flavors) defined for the cloud
  */
-"images : set org.jclouds.compute.domain.Image",
+// "hardwares : set org.jclouds.compute.domain.Hardware",
 /*
- * Available Disk Images
+ * All the Locations defined for the cloud
  */
-"av_images : set org.jclouds.compute.domain.Image from this.images",
-/*
- * Image hardwares, a.k.a., Hardware configuration
- */
-"hardwares : set org.jclouds.compute.domain.Hardware",
-/*
- * Location.
- */
-"locations : set org.jclouds.domain.Location" })
-@Invariant({/* All the Resources must have unique ID */
-		"all vmA : this.vms | all vmB : this.vms - vmA | vmA.id != vmB.id",
-		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",
-		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",
-		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",
-		/* Null is not an option for any Resource */
-		"no (null & this.vms)",
-		"no (null & this.images)",
-		"no (null & this.hardwares)",
-		"no (null & this.locations)",
-		/* This is only to avoid clsSpec on NodeMetadataStatus ! */
-		"all vm : this.running | (vm in this.vms && vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)",
-		//
-		"all ai : this.av_images| (ai in this.images && ai.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE)",
-		/* Use only the locations defined for the Cloud */
-		"this.images.location in this.locations", "this.hardwares.location in this.locations"
-/* EOF */
+// "locations : set org.jclouds.domain.Location"
 })
+// @Invariant({/* All the Resources must have unique ID */
+// "all vmA : this.instances | all vmB : this.instances - vmA | vmA.id != vmB.id",
+// "all imageA : this.images.elts | all imageB : this.images.elts - imageA | imageA.id != imageB.id",
+// "all hardwareA : this.hardwares.elts | all hardwareB : this.hardwares.elts - hardwareA | hardwareA.id != hardwareB.id",
+// "all locationA : this.locations.elts | all locationB : this.locations.elts - locationA | locationA.id != locationB.id",
+// /* Null is not an option for any Resource */
+// "no (null & this.instances)",
+// "no (null & this.images.elts)",
+// "no (null & this.hardwares.elts)",
+// "no (null & this.locations.elts)",
+// /* This is only to avoid clsSpec on NodeMetadataStatus ! */
+// "all vm : this.running | (vm in this.instances && vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)",
+// //
+// "all ai : this.av_images| (ai in this.images.elts && ai.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE)",
+// /* Use only the locations defined for the Cloud */
+// "this.images.elts.location in this.locations.elts", "this.hardwares.elts.location in this.locations.elts"
+// /* EOF */
+// })
 public class DeclarativeCloud {
+
+	private Set<Image> images;
+	private Set<Hardware> hardwares;
+	private Set<Location> locations;
 
 	public String toString() {
 		return "IMAGES:" + this.getAllImages() + "\n"//
@@ -84,12 +79,47 @@ public class DeclarativeCloud {
 				+ "NODES:" + this.getAllNodes();
 	}
 
-	public DeclarativeCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
-		init(images, hardwares, locations);
+	@Requires({
+			"some _images.elts",
+			"some _locations.elts",
+			"some _hardwares.elts",
+			// Force the invariants on the input data otherwise this creates problems !!
+			/* All the Resources must have unique ID */
+			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != null && imageA.id != imageB.id",
+			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != null && hardwareA.id != hardwareB.id",
+			"all locationA : _locations.elts | all locationB : _locations.elts - locationA | locationA.id != null && locationA.id != locationB.id",
+	// /* Null is not an option for any Resource */
+	// "no (null & _images)", "no (null & _hardwares)", "no (null & _locations)", "no (null & _images.elts)",
+	// "no (null & _hardwares.elts)", "no (null & _locations.elts)",
+	// /* Use only the locations defined for the Cloud */
+	// " _images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts",//
+	// //
+	// "all imageA : _images.elts | imageA.status != null" //
+	})
+	// TODO: This is not entirely right to me. I want just to check some preconditions on input data before doing
+	// anything, maybe I need a static method ?
+	@Ensures({ "no this.instances",//
+			"some this.images.elts", //
+			"some this.hardwares.elts", //
+			"some this.locations.elts", //
+	})
+	@Modifies({ "this.instances",//
+			// We are changing anyway the status of this object even if
+			"this.images", //
+			"this.hardwares", //
+			"this.locations", //
+	})
+	private void checkPreconditionsAndInit(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
+		Squander.exe(this, _images, _hardwares, _locations);
 	}
 
-	public DeclarativeCloud() {
-		init();
+	public DeclarativeCloud(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
+		// Check the preconditions
+		checkPreconditionsAndInit(_images, _hardwares, _locations);
+		// Initialize the state
+		this.images = _images;
+		this.hardwares = _hardwares;
+		this.locations = _locations;
 	}
 
 	/**
@@ -111,81 +141,28 @@ public class DeclarativeCloud {
 		return "" + currentId.incrementAndGet();
 	}
 
-	@Ensures({ "no this.vms", "no this.images", "no this.hardwares", "no this.locations" })
-	@Modifies({ "this.vms", "this.images", "this.hardwares", "this.locations" })
+	@Ensures({ "no this.instances", "no this.images.elts", "no this.hardwares.elts", "no this.locations.elts" })
+	@Modifies({ "this.instances", "this.images.elts", "this.hardwares.elts", "this.locations.elts" })
 	private void init() {
 		Squander.exe(this);
 	}
 
-	/**
-	 * This is a strict version that requires all the constraints about location and id to be satisfied. Alternatively
-	 * one can simply "ask" for them to be provided in the Ensures... The problem here is, can we update the location/id
-	 * stuff really ??
-	 * 
-	 */
-	@Requires({
-			"some _images",
-			"some _locations",
-			"some _hardwares",
-			// Force the invariants on the input data otherwise this creates problems !!
-			/* All the Resources must have unique ID */
-			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != null && imageA.id != imageB.id",
-			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != null && hardwareA.id != hardwareB.id",
-			"all locationA : _locations.elts | all locationB : _locations.elts - locationA | locationA.id != null && locationA.id != locationB.id",
-			/* Null is not an option for any Resource */
-			"no (null & _images)", "no (null & _hardwares)", "no (null & _locations)", "no (null & _images.elts)",
-			"no (null & _hardwares.elts)", "no (null & _locations.elts)",
-			/* Use only the locations defined for the Cloud */
-			" _images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts",//
-			//
-			"all imageA : _images.elts | imageA.status != null"
-
-	/* EOF */
-	})
-	/*
-	 * 
-	 */
-	@Ensures({
-	/* No virtual machines are running */
-	"no this.vms", //
-			/*
-			 * Maintain the original relations. Not that we had to remove the invariants from the spec to make this
-			 * working !
-			 */
-			"this.images = _images.elts", //
-			"this.images.status = _images.elts.status", //
-			"this.images.location = _images.elts.location",
-			//
-			"this.hardwares == _hardwares.elts",//
-			"this.hardwares.location == _hardwares.elts.location",//
-			//
-			"this.locations == _locations.elts",//
-	/* EOF */})
-	@Modifies({ "this.vms", //
-			"this.images", "this.hardwares", "this.locations"
-	/* EOF */
-	})
-	@Options(ensureAllInts = true, solveAll = true, bitwidth = 10)
-	private void init(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
-		Squander.exe(this, _images, _hardwares, _locations);
-	}
-
-	@Ensures({ "return.elts == this.images", "return.elts.status == this.images.status",
-			"return.elts.location == this.images.location" })
+	@Ensures({ "return.elts == this.images.elts", "return.elts.status == this.images.elts.status",
+			"return.elts.location == this.images.elts.location" })
 	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
 	@Modifies("return.elts")
 	public Set<Image> getAllImages() {
 		return Squander.exe(this);
 	}
 
-	@Ensures("return.elts == this.hardwares")
+	@Ensures("return.elts == this.hardwares.elts")
 	@FreshObjects(cls = Set.class, typeParams = { Hardware.class }, num = 1)
 	@Modifies("return.elts")
 	public Set<Hardware> getAllHardwares() {
 		return Squander.exe(this);
 	}
 
-	@Ensures("return.elts == this.vms")
+	@Ensures("return.elts == this.instances")
 	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
 	@Modifies("return.elts")
 	public Set<DeclarativeNode> getAllNodes() {
@@ -193,26 +170,26 @@ public class DeclarativeCloud {
 	}
 
 	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
-	@Requires("ids.elts in this.vms.id")
+	@Requires("ids.elts in this.instances.id")
 	@Modifies("return.elts")
-	@Ensures({ "return.elts in this.vms && ids.elts == return.elts.id" })
+	@Ensures({ "return.elts in this.instances && ids.elts == return.elts.id" })
 	public Set<DeclarativeNode> getNodes(Set<String> ids) {
 		return Squander.exe(this, ids);
 	}
 
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ "newNodeID !in @old(this.vms.id)",
+	@Requires({ "newNodeID !in @old(this.instances.id)",
 			//
-			"#this.hardwares > 0",
-			"#this.locations > 0",
-			// "some image : this.images | ( image.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && image.location in this.hardwares.location )"
+			"#this.hardwares.elts > 0",
+			"#this.locations.elts > 0",
+			// "some image : this.images.elts | ( image.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && image.location in this.hardwares.elts.location )"
 			/*
 			 * There must be at least one location with hardwares and images that are available
 			 */
-			"some L : ( this.images.location & this.hardwares.location ) | some I : this.images | I.location == L && I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE" })
+			"some L : ( this.images.elts.location & this.hardwares.elts.location ) | some I : this.images.elts | I.location == L && I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE" })
 	@Ensures({
 			/* Deploy the new node with given ID and RUNNING state */
-			"this.vms = @old(this.vms) + return",
+			"this.instances = @old(this.instances) + return",
 			/* Maintain ID */
 			"return.id = newNodeID",
 			/* Start VM as RUNNING */
@@ -221,7 +198,7 @@ public class DeclarativeCloud {
 			 * Node and Image connection: we do not care, but the image for the new node must be one of the available
 			 * one !!
 			 */
-			"one i : this.images | ( i.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE && i.location in this.hardwares.location && return.image = i && return.image.location == i.location )",
+			"one i : this.images.elts | ( i.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE && i.location in this.hardwares.elts.location && return.image = i && return.image.location == i.location )",
 			/*
 			 * Assign the location of the node to be the one of the image, such that is the location of the image !
 			 * (cannot do it in 3 steps ! image in images, location in locations, image.location = location )
@@ -230,8 +207,8 @@ public class DeclarativeCloud {
 			/*
 			 * Pick one Hardware configuration.
 			 */
-			"return.hardware in this.hardwares", })
-	@Modifies({ "this.vms", //
+			"return.hardware in this.hardwares.elts", })
+	@Modifies({ "this.instances", //
 			"return.id", //
 			"return.image",//
 			"return.image.location",//
@@ -249,14 +226,14 @@ public class DeclarativeCloud {
 	/**
 	 * Version with all the required parameters
 	 * 
-	 * @param nodeId Must be Unique for this cloud : nodeID !in @old(this.vms.id)
+	 * @param nodeId Must be Unique for this cloud : nodeID !in @old(this.instances.id)
 	 * @param group TODO not sure about specs.
 	 * @param name TODO not sure about specs.
-	 * @param location Must be a valid location: location in this.locations
+	 * @param location Must be a valid location: location in this.locations.elts
 	 * @param hardware Must be a valid hardware: hardware in this.hardware Must share a location with image:
 	 *            image.location == hardware.location
-	 * @param image Must be a valid image: image in this.images Must share a location with hardware hardware.location ==
-	 *            image.location
+	 * @param image Must be a valid image: image in this.images.elts Must share a location with hardware
+	 *            hardware.location == image.location
 	 * 
 	 * @return A valid new node with all the parameters set !
 	 */
@@ -265,22 +242,22 @@ public class DeclarativeCloud {
 	/*
 	 * Basic requirements for the Cloud to start a node ?
 	 */
-	"#this.hardwares > 0", "#this.locations > 0", "#this.images > 0",
+	"#this.hardwares.elts > 0", "#this.locations.elts > 0", "#this.images.elts > 0",
 	/* There must be at least one valid location shared among hardwares and images */
-	"#( this.locations & this.hardwares.location & this.images.location ) > 0",
+	"#( this.locations.elts & this.hardwares.elts.location & this.images.elts.location ) > 0",
 	/*
 	 * Requirements on Parameters
 	 */
 	/* nodeId must be unique */
-	"nodeId !in @old(this.vms.id) && nodeId != null",
-	/* Valid Location. Not sure. Can be location.id in this.locations.id ? */
-	"_location in this.locations && _location != null && _location.id != null",
-	/* Valid Image. Not sure. Can be image.id in this.images.id */
-	"_image in this.images && _image != null && _image.id != null && _image.location in this.locations",
+	"nodeId !in @old(this.instances.id) && nodeId != null",
+	/* Valid Location. Not sure. Can be location.id in this.locations.elts.id ? */
+	"_location in this.locations.elts && _location != null && _location.id != null",
+	/* Valid Image. Not sure. Can be image.id in this.images.elts.id */
+	"_image in this.images.elts && _image != null && _image.id != null && _image.location in this.locations.elts",
 	// /* The Image must be available */
 	// "_image.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE",
-	// /* Valid Hardware. // Not sure. Can be hardware.id in this.hardwares.id ? Can be null ?! */
-	// "_hardware in this.hardwares && _hardware != null && _hardware.id != null && _hardware.location in this.locations",
+	// /* Valid Hardware. // Not sure. Can be hardware.id in this.hardwares.elts.id ? Can be null ?! */
+	// "_hardware in this.hardwares.elts && _hardware != null && _hardware.id != null && _hardware.location in this.locations.elts",
 	// /* Image and Hardware must be defined in the same Location, the location must be _location */
 	// "_image.location == _hardware.location && _location == _image.location && _location == _hardware.location"
 	/**/
@@ -290,17 +267,18 @@ public class DeclarativeCloud {
 	 */
 	@Ensures({
 	/* Deploy the new node with given ID and RUNNING status */
-	"this.vms = @old(this.vms) + return", "return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
-	/* Maintain ID */
-	"return.id = nodeId",
-	/* Maintain name and group */
-	"return.group = _group && return.name = _name",
-	/* Maintain Location */
-	"return.location = _location",
-	/* Maintain Hardware. TODO If null take the default one */
-	"return.hardware = _hardware",
-	/* Maintain Image */
-	"return.image = _image"
+	"this.instances = @old(this.instances) + return",
+			"return.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
+			/* Maintain ID */
+			"return.id = nodeId",
+			/* Maintain name and group */
+			"return.group = _group && return.name = _name",
+			/* Maintain Location */
+			"return.location = _location",
+			/* Maintain Hardware. TODO If null take the default one */
+			"return.hardware = _hardware",
+			/* Maintain Image */
+			"return.image = _image"
 	/**/
 	})
 	/*
@@ -308,7 +286,7 @@ public class DeclarativeCloud {
 	 */
 	@Modifies({
 	/* Update the Deployed VM relation */
-	"this.vms",
+	"this.instances",
 	/* Update all the attributes of the return object */
 	/* TODO Must the second level relations be modifiable ? return.location.id ?! */
 	"return.id", "return.group", "return.name", "return.status", "return.image", "return.location", "return.hardware", })
@@ -325,24 +303,24 @@ public class DeclarativeCloud {
 
 	@Requires({
 			// At least one VM
-			"some this.vms",
+			"some this.instances",
 			// The node to stop must be in the running nodes
-			"_id in this.vms.id" })
-	@Ensures({ "_id !in this.vms.id && #this.vms = #@old(this.vms) - 1" })
-	@Modifies({ "this.vms", })
+			"_id in this.instances.id" })
+	@Ensures({ "_id !in this.instances.id && #this.instances = #@old(this.instances) - 1" })
+	@Modifies({ "this.instances", })
 	public void removeNode(String _id) {
 		Squander.exe(this, _id);
 	}
 
 	@Requires({
 			// At least one VM
-			"some this.vms",
+			"some this.instances",
 			// The node must be in the running nodes
-			"return.id in this.vms.id" })
+			"return.id in this.instances.id" })
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
 	// I think this is mandatory since we are creating a new instance, but it is
 	// not really comfortable, isn't it ?
-	@Ensures("one vm : this.vms | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location && return.hardware = vm.hardware")
+	@Ensures("one vm : this.instances | vm.id=_id && return.id = vm.id && return.status=vm.status && return.image=vm.image && return.location=vm.location && return.hardware = vm.hardware")
 	@Modifies({ "return.id", "return.status", "return.image", "return.location", "return.hardware" })
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id) {
@@ -351,22 +329,22 @@ public class DeclarativeCloud {
 
 	@Requires({
 			// At least one VM
-			"#this.images > 0",
+			"#this.images.elts > 0",
 			// The node must be in the running nodes
-			"_id in this.images.id" })
+			"_id in this.images.elts.id" })
 	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	@Ensures("one image : this.images | image.id=_id && return.id = image.id")
+	@Ensures("one image : this.images.elts | image.id=_id && return.id = image.id")
 	public Image getImage(String _id) {
 		return Squander.exe(this, _id);
 	}
 
 	@Requires({
 			// At least one VM
-			"some this.vms",
+			"some this.instances",
 			// The node must exist
-			"one vm : this.vms | vm.id == _id" })
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)" })
-	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
+			"one vm : this.instances | vm.id == _id" })
+	@Ensures({ "one vm : this.instances | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)" })
+	@Modifies({ "DeclarativeNode.status [{vm : this.instances | vm.id == _id}]" })
 	/**
 	 * This call is idempotent
 	 * @param _id
@@ -379,11 +357,11 @@ public class DeclarativeCloud {
 
 	@Requires({
 			// At least one VM
-			"some this.vms",
+			"some this.instances",
 			// The node must exist
-			"one vm : this.vms | vm.id == _id" })
-	@Ensures({ "one vm : this.vms | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED )" })
-	@Modifies({ "DeclarativeNode.status [{vm : this.vms | vm.id == _id}]" })
+			"one vm : this.instances | vm.id == _id" })
+	@Ensures({ "one vm : this.instances | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED )" })
+	@Modifies({ "DeclarativeNode.status [{vm : this.instances | vm.id == _id}]" })
 	/**
 	 * This call is idempotent
 	 * @param _id
@@ -392,7 +370,7 @@ public class DeclarativeCloud {
 		Squander.exe(this, _id);
 	}
 
-	@Ensures("return.elts == this.locations")
+	@Ensures("return.elts == this.locations.elts")
 	@FreshObjects(cls = Set.class, typeParams = { Location.class }, num = 1)
 	@Modifies("return.elts")
 	public Set<Location> getAllLocations() {
