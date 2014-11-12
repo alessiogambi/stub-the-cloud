@@ -3,41 +3,23 @@ package org.jclouds.compute.declarativestub.config;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.compute.JCloudsNativeComputeServiceAdapter;
-import org.jclouds.compute.JCloudsNativeComputeServiceAdapter.NodeWithInitialCredentials;
-import org.jclouds.compute.config.BaseComputeServiceContextModule;
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
 import org.jclouds.compute.declarativestub.core.DeclarativeNode;
 import org.jclouds.compute.domain.Hardware;
-import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
-import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
-import org.jclouds.compute.domain.NodeMetadataStatus;
-import org.jclouds.compute.domain.OperatingSystem;
-import org.jclouds.compute.domain.OsFamily;
-import org.jclouds.compute.domain.Processor;
-import org.jclouds.compute.domain.SecurityGroup;
 import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.domain.Volume;
-import org.jclouds.compute.domain.internal.VolumeImpl;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 
 /**
  * This class defined the spec for a <strong>single-user<strong> cloud !
@@ -53,148 +35,18 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 
 	// Spec of the Cloud implemented with Squander (MIT)
 	// Possibly this implementation should be injected in the constructor !
-	private DeclarativeCloud cloud;
-
-	// Temporary Support for Test
-
-	// Data Fixture? Different instances of possible OS and versions ?!
-	private final Map<OsFamily, Map<String, String>> osToVersionMap;
-
-	// TODO Location -> embed into cloud model !
-	private final Supplier<Location> location;
+	private final DeclarativeCloud cloud;
 
 	// Cached nodes
 	private final Map<String, NodeMetadata> cachedNodes;
 
-	/*
-	 * private final ConcurrentMap<String, NodeMetadata> nodes; private final Multimap<String, SecurityGroup>
-	 * groupsForNodes; private final ListeningExecutorService ioExecutor; private final Provider<Integer> idProvider;
-	 * private final Provider<Integer> groupIdProvider; private final String publicIpPrefix; private final String
-	 * privateIpPrefix; private final String passwordPrefix; private final Supplier<Set<? extends Location>>
-	 * locationSupplier; private final Optional<SecurityGroupExtension> securityGroupExtension;
-	 */
+	// private final Set<Image> cachedImages;
+	// private final Set<Hardware> cachedHardwares;
 
-	/*
-	 * // Implementation of the PER-CLIENT view of virtual machines. The Per client view is managed by guice
-	 * @Inject public StubComputeServiceAdapter(ConcurrentMap<String, NodeMetadata> nodes, // Execute State changes ?!
-	 * @Named(Constants.PROPERTY_IO_WORKER_THREADS) ListeningExecutorService ioExecutor, // Generate unique id ?!
-	 * @Named("NODE_ID") Provider<Integer> idProvider,
-	 * @Named("PUBLIC_IP_PREFIX") String publicIpPrefix,
-	 * @Named("PRIVATE_IP_PREFIX") String privateIpPrefix,
-	 * @Named("PASSWORD_PREFIX") String passwordPrefix, JustProvider locationSupplier, Multimap<String, SecurityGroup>
-	 * groupsForNodes,
-	 * @Named("GROUP_ID") Provider<Integer> groupIdProvider, Optional<SecurityGroupExtension> securityGroupExtension) {
-	 * this.nodes = nodes; this.ioExecutor = ioExecutor; this.location = location; this.idProvider = idProvider;
-	 * this.publicIpPrefix = publicIpPrefix; this.privateIpPrefix = privateIpPrefix; this.passwordPrefix =
-	 * passwordPrefix; this.locationSupplier = locationSupplier; this.osToVersionMap = osToVersionMap;
-	 * this.groupsForNodes = groupsForNodes; this.groupIdProvider = groupIdProvider; this.securityGroupExtension =
-	 * securityGroupExtension; }
-	 */
 	@Inject
-	public DeclarativeStubComputeServiceAdapter(
-	/*
-	 * TODO Inject the cloud specifications here and Inject the initial state of the cloud
-	 */
-	// Temporary Support for the test
-			/** Provided via TODO: Find Me ! */
-			Supplier<Location> location,
-			/**
-			 * Provided via TODO Check me {@link BaseComputeServiceContextModule#provideOsVersionMap}
-			 */
-			Map<OsFamily, Map<String, String>> osToVersionMap) {
-
-		this.location = location;
-		this.osToVersionMap = osToVersionMap;
-		// Initialize the DeclarativeCloud.
-		// Note the relation between locations, images, hardware !!
-		Set<Location> defaultLocations = provideLocations();
-		// Preconditions here !
-		cloud = new DeclarativeCloud(provideImages(defaultLocations), provideHardware(defaultLocations),
-				defaultLocations);
-		// TEMPORARY TO STORE "REAL" NODE OBJECTS SINCE OUR CLOUD MANAGES ONLY
-		// ABSTRACT OBJECTS TILL NOW
+	public DeclarativeStubComputeServiceAdapter(DeclarativeCloud cloud) {
+		this.cloud = cloud;
 		this.cachedNodes = new HashMap<String, NodeMetadata>();
-
-	}
-
-	private Set<Location> provideLocations() {
-		// Empty location is fine ?!
-		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
-		// Add the one provided via injection
-		locations.add(this.location.get());
-		return locations.build();
-	}
-
-	// Cannot be called from dependency modules withouth firstly inject os and
-	// location deps because it requires additional resources injected !
-	protected Set<Image> provideImages(Set<Location> locations) {
-		Location location = locations.iterator().next();
-		ImmutableSet.Builder<Image> images = ImmutableSet.<Image> builder();
-		int id = 1;
-
-		// Let's work only with few images first !
-
-		int count = 0;
-		int MAX_Count = 5;
-
-		for (boolean is64Bit : new boolean[] { true, false }) {
-			for (Entry<OsFamily, Map<String, String>> osVersions : osToVersionMap.entrySet()) {
-
-				for (String version : ImmutableSet.copyOf(osVersions.getValue().values())) {
-
-					String desc = String.format("declarative-stub %s %s", osVersions.getKey(), is64Bit);
-
-					// THIS SHOULD BE CREATED USING THE SPEC OF THE CLOUD AND A
-					// SMART
-					// PRECONDITION
-					Image image = new ImageBuilder()
-							.ids(id++ + "")
-							.name(osVersions.getKey().name())
-							.location(location)
-							.operatingSystem(
-									new OperatingSystem(osVersions.getKey(), desc, version, null, desc, is64Bit))
-							.description(desc).status(ImageStatus.AVAILABLE).build();
-
-					System.out.println("DeclarativeStubComputeServiceAdapter.provideImages()" + image.getId() + " - "
-							+ image.getDescription() + " - " + image.getLocation());
-
-					images.add(image);
-
-					count = count + 1;
-					System.out.println("DeclarativeStubComputeServiceAdapter.provideImages() " + count);
-					if (count == MAX_Count) {
-						break;
-					}
-				}
-				if (count == MAX_Count) {
-					break;
-				}
-			}
-			if (count == MAX_Count) {
-				break;
-			}
-		}
-		return images.build();
-	}
-
-	private Set<Hardware> provideHardware(Set<Location> locations) {
-		// This is similar to listImage
-		Location location = locations.iterator().next();
-		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
-
-		flavors.add(new HardwareBuilder().ids("1").name("small").location(location)
-				.processors(ImmutableList.of(new Processor(1, 1.0))).ram(1740)
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 160, true, false))).build());
-
-		flavors.add(new HardwareBuilder().ids("2").name("medium").location(location)
-				.processors(ImmutableList.of(new Processor(4, 1.0))).ram(7680)
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 850, true, false))).build());
-
-		flavors.add(new HardwareBuilder().ids("3").name("large").location(location)
-				.processors(ImmutableList.of(new Processor(8, 1.0))).ram(15360)
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 1690, true, false))).build());
-
-		return flavors.build();
 	}
 
 	@Override
@@ -307,7 +159,9 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	 */
 	@Override
 	public Iterable<Hardware> listHardwareProfiles() {
+		System.out.println("DeclarativeStubComputeServiceAdapter.listHardwareProfiles()");
 		return cloud.getAllHardwares();
+		// return cachedHardwares;
 	}
 
 	/**
@@ -318,7 +172,9 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	 */
 	@Override
 	public Iterable<Image> listImages() {
+		System.out.println("DeclarativeStubComputeServiceAdapter.listImages()");
 		return cloud.getAllImages();
+		// return cachedImages;
 	}
 
 	@Override

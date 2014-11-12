@@ -124,11 +124,14 @@ public class DeclarativeCloud {
 	 * 
 	 */
 	@Requires({
+			"some _images",
+			"some _locations",
+			"some _hardwares",
 			// Force the invariants on the input data otherwise this creates problems !!
 			/* All the Resources must have unique ID */
-			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != imageB.id",
-			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != hardwareB.id",
-			"all locationA : _locations.elts | all locationB : _locations.elts - locationA | locationA.id != locationB.id",
+			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != null && imageA.id != imageB.id",
+			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != null && hardwareA.id != hardwareB.id",
+			"all locationA : _locations.elts | all locationB : _locations.elts - locationA | locationA.id != null && locationA.id != locationB.id",
 			/* Null is not an option for any Resource */
 			"no (null & _images)", "no (null & _hardwares)", "no (null & _locations)", "no (null & _images.elts)",
 			"no (null & _hardwares.elts)", "no (null & _locations.elts)",
@@ -155,10 +158,11 @@ public class DeclarativeCloud {
 			//
 			"this.hardwares == _hardwares.elts",//
 			"this.hardwares.location == _hardwares.elts.location",//
+			//
 			"this.locations == _locations.elts",//
 	/* EOF */})
 	@Modifies({ "this.vms", //
-			"this.images", "this.hardwares", "this.locations",
+			"this.images", "this.hardwares", "this.locations"
 	/* EOF */
 	})
 	@Options(ensureAllInts = true, solveAll = true, bitwidth = 10)
@@ -166,7 +170,8 @@ public class DeclarativeCloud {
 		Squander.exe(this, _images, _hardwares, _locations);
 	}
 
-	@Ensures("return.elts == this.images")
+	@Ensures({ "return.elts == this.images", "return.elts.status == this.images.status",
+			"return.elts.location == this.images.location" })
 	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
 	@Modifies("return.elts")
 	public Set<Image> getAllImages() {
