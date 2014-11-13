@@ -72,12 +72,13 @@ public class DeclarativeCloudTest {
 
 	}
 
+	// TODO Note that an empty set by google erase the type parameter and then squander can read that any=longer
+	// !
+	// By using a standard implementation of Sets this works just fine !!!!
+	// Google is to Blame !!
 	@Test
-	public void testFailInitIfWrongPreconditionsEmptySets() {
+	public void testFailInitIfWrongPreconditionsEmptyImmutableSets() {
 		try {
-			// This fail with assertions because the set is empty and Squander cannot understand that the set is
-			// actually a set of Images !
-			// This should fail because thre are no Images !
 			cloud = new DeclarativeCloud(ImmutableSet.<Image> builder().build(), ImmutableSet.<Hardware> builder()
 					.build(), ImmutableSet.<Location> builder().build());
 			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");
@@ -89,19 +90,15 @@ public class DeclarativeCloudTest {
 	}
 
 	@Test
-	public void testFailInitIfWrongPreconditions() {
+	public void testFailInitIfWrongPreconditionsEmptyHashSets() {
 		try {
-			// TODO Note that an empty set by google erase the type parameter and then squander can read that any=longer !
-			// By using a standard implementation of Sets this works just fine !!!!
-			// Google is to Blame !!
-			cloud = new DeclarativeCloud(
-					new HashSet<Image>(),
-//					ImmutableSet.<Image> builder().build(),
+			cloud = new DeclarativeCloud(new HashSet<Image>(),
+			// ImmutableSet.<Image> builder().build(),
 					new HashSet<Hardware>(),
-//					ImmutableSet.<Hardware> builder().build(),
+					// ImmutableSet.<Hardware> builder().build(),
 					new HashSet<Location>()
-//					ImmutableSet.<Location> builder().build()
-					);
+			// ImmutableSet.<Location> builder().build()
+			);
 			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");
 		} catch (Exception e) {
 			e.printStackTrace();
