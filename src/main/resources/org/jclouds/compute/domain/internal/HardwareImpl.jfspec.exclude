@@ -1,0 +1,6 @@
+class HardwareImpl {
+
+	@SpecField("id : one String from this.id")
+	@SpecField("location : one org.jclouds.domain.Location from this.location" )
+
+}

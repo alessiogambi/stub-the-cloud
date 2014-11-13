@@ -1,17 +1,7 @@
 package at.ac.tuwien.stubthecloud;
 
-import java.util.Map;
-
 import org.jclouds.compute.domain.Image;
 import org.testng.annotations.Test;
-
-import edu.mit.csail.sdg.annotations.Ensures;
-import edu.mit.csail.sdg.annotations.FreshObjects;
-import edu.mit.csail.sdg.annotations.Modifies;
-import edu.mit.csail.sdg.annotations.Options;
-import edu.mit.csail.sdg.squander.Squander;
-import edu.mit.csail.sdg.squander.examples.graph.Graph;
-import edu.mit.csail.sdg.squander.examples.graph.Graph.Node;
 
 public class SquanderTest {
 	// /**

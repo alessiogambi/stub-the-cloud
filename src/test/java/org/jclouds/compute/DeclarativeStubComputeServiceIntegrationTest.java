@@ -53,7 +53,7 @@ import com.google.inject.Module;
 import edu.mit.csail.sdg.squander.log.Log.Level;
 import edu.mit.csail.sdg.squander.options.SquanderGlobalOptions;
 import edu.mit.csail.sdg.squander.serializer.HardwareSer;
-import edu.mit.csail.sdg.squander.serializer.ImageSer;
+import edu.mit.csail.sdg.squander.serializer.ImageImplSer;
 import edu.mit.csail.sdg.squander.serializer.LocationSer;
 import edu.mit.csail.sdg.squander.serializer.special.ObjSerFactory;
 
@@ -71,7 +71,7 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 		provider = "declarative-stub";
 
 		// Register the F***ING Serializable
-		ObjSerFactory.addSer(new ImageSer());
+		ObjSerFactory.addSer(new ImageImplSer());
 		ObjSerFactory.addSer(new HardwareSer());
 		ObjSerFactory.addSer(new LocationSer());
 	}

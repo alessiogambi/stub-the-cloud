@@ -1,0 +1,8 @@
+class ImageImpl {
+
+// Those have the same name, and this results in a recursive call !!!
+	@SpecField("id : one String from this.id" )
+	@SpecField("location : one org.jclouds.domain.Location from this.location" )
+	@SpecField("status : one org.jclouds.compute.domain.ImageStatus from this.status")
+
+}

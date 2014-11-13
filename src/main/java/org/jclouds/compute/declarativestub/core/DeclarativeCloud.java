@@ -16,10 +16,12 @@ import org.jclouds.compute.domain.Image;
 import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.annotations.Ensures;
+import edu.mit.csail.sdg.annotations.Fresh;
 import edu.mit.csail.sdg.annotations.FreshObjects;
+import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
-import edu.mit.csail.sdg.annotations.Options;
 import edu.mit.csail.sdg.annotations.Requires;
+import edu.mit.csail.sdg.annotations.Returns;
 import edu.mit.csail.sdg.annotations.SpecField;
 import edu.mit.csail.sdg.squander.Squander;
 
@@ -48,29 +50,27 @@ import edu.mit.csail.sdg.squander.Squander;
  */
 // "locations : set org.jclouds.domain.Location"
 })
-// @Invariant({/* All the Resources must have unique ID */
-// "all vmA : this.instances | all vmB : this.instances - vmA | vmA.id != vmB.id",
-// "all imageA : this.images.elts | all imageB : this.images.elts - imageA | imageA.id != imageB.id",
-// "all hardwareA : this.hardwares.elts | all hardwareB : this.hardwares.elts - hardwareA | hardwareA.id != hardwareB.id",
-// "all locationA : this.locations.elts | all locationB : this.locations.elts - locationA | locationA.id != locationB.id",
-// /* Null is not an option for any Resource */
-// "no (null & this.instances)",
-// "no (null & this.images.elts)",
-// "no (null & this.hardwares.elts)",
-// "no (null & this.locations.elts)",
-// /* This is only to avoid clsSpec on NodeMetadataStatus ! */
-// "all vm : this.running | (vm in this.instances && vm.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)",
-// //
-// "all ai : this.av_images| (ai in this.images.elts && ai.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE)",
-// /* Use only the locations defined for the Cloud */
-// "this.images.elts.location in this.locations.elts", "this.hardwares.elts.location in this.locations.elts"
+@Invariant({/* All the Resources must have unique ID */
+		"all vmA : this.instances | all vmB : this.instances - vmA | vmA.id != vmB.id",
+		"all imageA : this.images.elts | all imageB : this.images.elts - imageA | imageA.id != imageB.id",
+		"all hardwareA : this.hardwares.elts | all hardwareB : this.hardwares.elts - hardwareA | hardwareA.id != hardwareB.id",
+		"all locationA : this.locations.elts | all locationB : this.locations.elts - locationA | locationA.id != locationB.id",
+		/* Null is not an option for any Resource */
+		"no (null & this.instances)", "no (null & this.images.elts)", "no (null & this.hardwares.elts)",
+		"no (null & this.locations.elts)",
+		/* Relevant Fields ? */
+		"all H : this.hardwares.elts | H.location != null",
+		"all I : this.images.elts | I.id != null && I.location != null && I.status != null",
+		/* Use only the locations defined for the Cloud */
+		"this.images.elts.location in this.locations.elts", "this.hardwares.elts.location in this.locations.elts"
 // /* EOF */
-// })
+})
 public class DeclarativeCloud {
 
-	private Set<Image> images;
-	private Set<Hardware> hardwares;
+	// Note that the input implementations are of type ImmutableSet so we can return them directly
 	private Set<Location> locations;
+	private Set<Hardware> hardwares;
+	private Set<Image> images;
 
 	public String toString() {
 		return "IMAGES:" + this.getAllImages() + "\n"//
@@ -80,56 +80,63 @@ public class DeclarativeCloud {
 	}
 
 	@Requires({
-			"some _images.elts",
+			/* At least one location must be defined for this cloud to be valid */
 			"some _locations.elts",
-			"some _hardwares.elts",
-			// Force the invariants on the input data otherwise this creates problems !!
-			/* All the Resources must have unique ID */
-			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != null && imageA.id != imageB.id",
-			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != null && hardwareA.id != hardwareB.id",
+			/* Null inputs are not ok */
+			"_locations != null",
+			"_hardwares != null ",
+			"_images != null",
+			/* No null elements in the input */
+			"null ! in _locations.elts",
+			"null ! in _hardwares.elts",
+			"null ! in _images.elts",
+			/* All the Resources must have a non-null ID that is unique per type of resource */
 			"all locationA : _locations.elts | all locationB : _locations.elts - locationA | locationA.id != null && locationA.id != locationB.id",
-	// /* Null is not an option for any Resource */
-	// "no (null & _images)", "no (null & _hardwares)", "no (null & _locations)", "no (null & _images.elts)",
-	// "no (null & _hardwares.elts)", "no (null & _locations.elts)",
-	// /* Use only the locations defined for the Cloud */
-	// " _images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts",//
-	// //
-	// "all imageA : _images.elts | imageA.status != null" //
+			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != null && hardwareA.id != hardwareB.id",
+			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != null && imageA.id != imageB.id",
+			/* Images and Hardware can use only Locations defined for the Cloud */
+			" _images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts",
+			/* Images must have a defined Status */
+			"all imageA : _images.elts | imageA.status != null" //
 	})
-	// TODO: This is not entirely right to me. I want just to check some preconditions on input data before doing
-	// anything, maybe I need a static method ?
-	@Ensures({ "no this.instances",//
-			"some this.images.elts", //
-			"some this.hardwares.elts", //
-			"some this.locations.elts", //
-	})
-	@Modifies({ "this.instances",//
-			// We are changing anyway the status of this object even if
-			"this.images", //
-			"this.hardwares", //
-			"this.locations", //
-	})
+	@Ensures({ "no this.instances" })
+	@Modifies({ "this.instances" })
 	private void checkPreconditionsAndInit(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
 		Squander.exe(this, _images, _hardwares, _locations);
 	}
 
 	public DeclarativeCloud(Set<Image> _images, Set<Hardware> _hardwares, Set<Location> _locations) {
-		// Check the preconditions
+		// Check the preconditions on the input with Squander and initialize the instances SpecField
 		checkPreconditionsAndInit(_images, _hardwares, _locations);
-		// Initialize the state
+		// Assign the state objects
 		this.images = _images;
 		this.hardwares = _hardwares;
 		this.locations = _locations;
 	}
 
-	/**
-	 * Generate a random, but sound node
-	 * 
-	 * @return
-	 */
-	/* NON ANNOTATED VERSION */
 	public DeclarativeNode createNode() {
-		return createNode(allocateID());
+		//
+		String id = allocateID();
+		checkCreateNodePrecondition(id);
+		return new DeclarativeNode();
+	}
+
+	@Requires({
+	/* The id provided for the node must be unique */
+	"newNodeID !in @old(this.instances.id)",
+	/* There must be some locations, hardwares and images */
+	"some this.locations.elts",
+			"some this.hardwares.elts",
+			"some this.images.elts",
+			/* There must be a common location between images and hardwares */
+			// "some ( this.images.elts.location & this.hardwares.elts.location )"
+			/* There must be some image that is AVAILABLE in a Location where at least one Hardware is defined */
+			// "some I : this.images.elts | ( I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && ( I.location in this.hardwares.elts.location ) )",
+			"some L : ( this.images.elts.location & this.hardwares.elts.location ) | some I : this.images.elts | I.location == L && I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE"
+
+	})
+	private void checkCreateNodePrecondition(String newNodeID) {
+		Squander.exe(this, newNodeID);
 	}
 
 	/*
@@ -147,19 +154,16 @@ public class DeclarativeCloud {
 		Squander.exe(this);
 	}
 
-	@Ensures({ "return.elts == this.images.elts", "return.elts.status == this.images.elts.status",
-			"return.elts.location == this.images.elts.location" })
-	@FreshObjects(cls = Set.class, typeParams = { Image.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<Image> getAllImages() {
-		return Squander.exe(this);
+	public Set<Location> getAllLocations() {
+		return this.locations;
 	}
 
-	@Ensures("return.elts == this.hardwares.elts")
-	@FreshObjects(cls = Set.class, typeParams = { Hardware.class }, num = 1)
-	@Modifies("return.elts")
 	public Set<Hardware> getAllHardwares() {
-		return Squander.exe(this);
+		return this.hardwares;
+	}
+
+	public Set<Image> getAllImages() {
+		return this.images;
 	}
 
 	@Ensures("return.elts == this.instances")
@@ -178,18 +182,32 @@ public class DeclarativeCloud {
 	}
 
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
-	@Requires({ "newNodeID !in @old(this.instances.id)",
-			//
-			"#this.hardwares.elts > 0",
-			"#this.locations.elts > 0",
-			// "some image : this.images.elts | ( image.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && image.location in this.hardwares.elts.location )"
-			/*
-			 * There must be at least one location with hardwares and images that are available
-			 */
-			"some L : ( this.images.elts.location & this.hardwares.elts.location ) | some I : this.images.elts | I.location == L && I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE" })
+	// @Requires({
+	// /* The id provided for the node must be unique */
+	// "newNodeID !in @old(this.instances.id)",
+	// /* There must be some locations, hardwares and images */
+	// "some this.locations.elts", "some this.hardwares.elts",
+	// /* We need to considere locations of images and hardwares */
+	// "some this.images.elts.location", "some this.hardwares.elts.location",
+	// //
+	// "some ( this.images.elts.location & this.hardwares.elts.location )" // This does not work !
+	/* There must be some image that is AVAILABLE in a Location where at least one Hardware is defined */
+	// "some I : this.images.elts | ( I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE && ( I.location in this.hardwares.elts.location ) )",
+	// "some L : ( this.images.elts.location & this.hardwares.elts.location ) | some I : this.images.elts | I.location == L && I.status == org.jclouds.compute.domain.ImageStatus.AVAILABLE"
+	//
+	// })
+	/*
+	 * TODO Check Precondition first !
+	 */
+	// This method post conditions are kinda Krappy, they allow the internal objects in this class to be modified
+	// despite they are not declared as modifiable ?!
 	@Ensures({
 			/* Deploy the new node with given ID and RUNNING state */
 			"this.instances = @old(this.instances) + return",
+			/* Keep the rest as it is ! */
+			"this.images = @old(this.images)",
+			"this.locations = @old( this.locations)",
+			"this.hardwares = @old( this.hardwares)",
 			/* Maintain ID */
 			"return.id = newNodeID",
 			/* Start VM as RUNNING */
@@ -198,6 +216,7 @@ public class DeclarativeCloud {
 			 * Node and Image connection: we do not care, but the image for the new node must be one of the available
 			 * one !!
 			 */
+			//
 			"one i : this.images.elts | ( i.status = org.jclouds.compute.domain.ImageStatus.AVAILABLE && i.location in this.hardwares.elts.location && return.image = i && return.image.location == i.location )",
 			/*
 			 * Assign the location of the node to be the one of the image, such that is the location of the image !
@@ -209,16 +228,16 @@ public class DeclarativeCloud {
 			 */
 			"return.hardware in this.hardwares.elts", })
 	@Modifies({ "this.instances", //
-			"return.id", //
-			"return.image",//
-			"return.image.location",//
-			"return.image.status",//
+			"return.id", // Maybe somethign like DeclarativeNode.status [{ n : DeclarativeNode | n.status == null }] ?
 			"return.status",//
+			"return.image",//
 			"return.location",//
 			"return.hardware",//
-			"return.hardware.location"//
+	// "return.image.status",//
+	// "return.image.location",//
+	// "return.hardware.location"//
 	})
-	@Options(ensureAllInts = true, solveAll = true, bitwidth = 5)
+	// @Options(ensureAllInts = true, solveAll = true, bitwidth = 5)
 	public DeclarativeNode createNode(String newNodeID) {
 		return Squander.exe(this, newNodeID);
 	}
@@ -327,15 +346,20 @@ public class DeclarativeCloud {
 		return Squander.exe(this, _id);
 	}
 
-	@Requires({
-			// At least one VM
-			"#this.images.elts > 0",
-			// The node must be in the running nodes
-			"_id in this.images.elts.id" })
-	// Return a COPY of the NODE- maybe this one is better to do imperatively ?!
-	@Ensures("one image : this.images.elts | image.id=_id && return.id = image.id")
+	// FIXME Why this results in NoSolution if Invariants are added at the preconditions ?!
+	@Requires("true")
+	@Ensures("true")
+	private void checkGetImagePreconditions(String _id) {
+		Squander.exe(this, _id);
+	}
+
+	// @Ensures({ "return == { I : one Image | I in this.images.elts && I.id == _id }", "@old(Image.id)==Image.id" })
 	public Image getImage(String _id) {
-		return Squander.exe(this, _id);
+		// TODO During precondition checking it does not check invariants !?
+		// return Squander.exe(this, _id);
+		checkGetImagePreconditions(_id);
+		//
+		return null;
 	}
 
 	@Requires({
@@ -368,13 +392,6 @@ public class DeclarativeCloud {
 	 */
 	public void suspendNode(String _id) {
 		Squander.exe(this, _id);
-	}
-
-	@Ensures("return.elts == this.locations.elts")
-	@FreshObjects(cls = Set.class, typeParams = { Location.class }, num = 1)
-	@Modifies("return.elts")
-	public Set<Location> getAllLocations() {
-		return Squander.exe(this);
 	}
 
 }

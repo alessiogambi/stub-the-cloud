@@ -3,11 +3,7 @@ package edu.mit.csail.sdg.squander.serializer;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.ImageStatus;
-import org.jclouds.compute.domain.OperatingSystem;
-import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.internal.ImageImpl;
 import org.jclouds.domain.Location;
 
@@ -25,7 +21,7 @@ import edu.mit.csail.sdg.squander.spec.JavaScene;
  * @author alessiogambi
  *
  */
-public class ImageSer implements IObjSer {
+public class ImageImplSer implements IObjSer {
 
 	public static final String ID = "id";
 	public static final String LOCATION = "location";
@@ -33,22 +29,29 @@ public class ImageSer implements IObjSer {
 
 	@Override
 	public boolean accepts(Class<?> clz) {
-		return Image.class.isAssignableFrom(clz);
+		return ImageImpl.class.isAssignableFrom(clz);
 	}
 
 	@Override
-	public Image newInstance(Class<?> cls) {
-		// throw new RuntimeException("Cannot create instance of Image");
-		// Create a default image, that is an IMAGE that is easy to spot as DEFAULT
-		Image image = new ImageBuilder().ids("Default IMAGE").name("Default IMAGE").location(null)
-				.operatingSystem(new OperatingSystem(OsFamily.LINUX, "desc", "version", null, "desc", false))
-				.description("desc").status(ImageStatus.AVAILABLE).build();
-		return image;
+	public ImageImpl newInstance(Class<?> cls) {
+		// Since at the moment we rely on user-provided instances we do not let
+		// Squander create instances of this interface
+		throw new RuntimeException("Cannot create instance of Image");
+		// // Create a default image
+		// Image image = new ImageBuilder()
+		// .ids("Default IMAGE")
+		// .name("Default IMAGE")
+		// .location(null)
+		// .operatingSystem(
+		// new OperatingSystem(OsFamily.LINUX, "desc", "version",
+		// null, "desc", false)).description("desc")
+		// .status(ImageStatus.AVAILABLE).build();
+		// return image;
 	}
 
 	@Override
 	public List<FieldValue> absFunc(JavaScene javaScene, Object obj) {
-		Log.debug("\n\tImageSer.absFunc() " + obj.getClass() + "@" + obj.hashCode() + "\n");
+		Log.debug("\n\tImageImplSer.absFunc() " + obj.getClass() + "@" + obj.hashCode() + "\n");
 		ClassSpec cls = javaScene.classSpecForObj(obj);
 		List<FieldValue> result = new LinkedList<FieldValue>();
 
