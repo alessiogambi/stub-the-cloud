@@ -15,28 +15,24 @@
 
 	<dependencies>
 		<!-- Abstract interface -->
-		<dependency>
-			<groupId>org.apache.jclouds</groupId>
-			<artifactId>jclouds-compute</artifactId>
-			<version>1.8.0</version>
-		</dependency>
+		<!-- Reference jclouds-compute as projects in the workspace. Use the implementation 
+			from https://github.com/alessiogambi/jclouds-1.8.0-clone-for-squander.git -->
+		<!-- <dependency> <groupId>org.apache.jclouds</groupId> <artifactId>jclouds-compute</artifactId> 
+			<version>1.8.0</version> </dependency> -->
 		<dependency>
 			<groupId>org.apache.jclouds</groupId>
 			<artifactId>jclouds-compute</artifactId>
 			<classifier>tests</classifier>
 			<version>1.8.0</version>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.jclouds</groupId>
-			<artifactId>jclouds-core</artifactId>
-			<version>1.8.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.jclouds</groupId>
-			<artifactId>jclouds-core</artifactId>
-			<version>1.8.0</version>
-			<classifier>tests</classifier>
-		</dependency>
+
+		<!-- Reference jclouds-core as projects in the workspace. Use the implementation 
+			from https://github.com/alessiogambi/jclouds-1.8.0-clone-for-squander.git -->
+		<!-- <dependency> <groupId>org.apache.jclouds</groupId> <artifactId>jclouds-core</artifactId> 
+			<version>1.8.0</version> </dependency> -->
+
+		<!-- <dependency> <groupId>org.apache.jclouds</groupId> <artifactId>jclouds-core</artifactId> 
+			<version>1.8.0</version> <classifier>tests</classifier> </dependency> -->
 		<!-- Logging Facilities -->
 		<dependency>
 			<groupId>org.apache.jclouds.driver</groupId>
@@ -50,9 +46,9 @@
 		</dependency>
 
 		<!-- Add SQUANDER local dependencies -->
-	<!-- <dependency> <artifactId>mit.squander</artifactId> <groupId>squander</groupId> 
-		<scope>system</scope> <version>2.0</version> <systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath> 
-		</dependency> -->
+		<!-- <dependency> <artifactId>mit.squander</artifactId> <groupId>squander</groupId> 
+			<scope>system</scope> <version>2.0</version> <systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath> 
+			</dependency> -->
 
 		<dependency>
 			<artifactId>mit.squander</artifactId>
