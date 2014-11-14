@@ -28,6 +28,7 @@ import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -187,6 +188,12 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 
 	}
 
+	/*
+	 * protected void setStateOnNodeAfterDelay(final NodeMetadataStatus status, final NodeMetadata node, final long
+	 * millis) { if (millis == 0l) setStateOnNode(status, node); else ioExecutor.execute(new Runnable() {
+	 * @Override public void run() { try { Thread.sleep(millis); } catch (InterruptedException e) {
+	 * Throwables.propagate(e); } setStateOnNode(status, node); } }); }
+	 */
 	// TODO Require TIME/TIMED Specs or an executor implementatino to evolve the
 	// state
 	// somehow. Times can always be generated from the specs.
@@ -199,7 +206,6 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 
 	@Override
 	public void resumeNode(String id) {
-		// TODO Implement resume ?
 		cloud.startNode(id);
 	}
 

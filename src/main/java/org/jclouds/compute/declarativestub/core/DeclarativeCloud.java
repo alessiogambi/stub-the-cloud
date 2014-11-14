@@ -149,6 +149,8 @@ public interface DeclarativeCloud {
 	 * Deploy the new node with given ID and TODO RUNNING state
 	 */
 	"this.instances = @old(this.instances) + return && #this.instances = @old(#this.instances) + 1",
+	/**/
+	"return.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
 	/*
 	 * Keep the given parameters
 	 */
@@ -158,7 +160,7 @@ public interface DeclarativeCloud {
 	/* */
 	"this.instances",
 	/**/
-	"return.id", "return.name", "return.group", "return.location", "return.hardware", "return.image"//
+	"return.id", "return.name", "return.group", "return.location", "return.hardware", "return.image", "return.status"//
 	})
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode createNode(String newNodeID, String _name, String _group, DeclarativeLocation _location,

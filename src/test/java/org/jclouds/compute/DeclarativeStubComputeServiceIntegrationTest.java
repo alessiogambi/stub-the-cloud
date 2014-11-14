@@ -16,12 +16,16 @@
  */
 package org.jclouds.compute;
 
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reportMatcher;
+import static org.jclouds.compute.predicates.NodePredicates.inGroup;
 import static org.jclouds.util.Predicates2.retry;
 import static org.testng.Assert.assertEquals;
 
@@ -35,6 +39,7 @@ import org.easymock.IArgumentMatcher;
 import org.jclouds.compute.config.AdminAccessConfiguration;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.internal.BaseComputeServiceLiveTest;
 import org.jclouds.compute.util.OpenSocketFinder;
 import org.jclouds.crypto.Pems;
@@ -513,9 +518,38 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 		super.testGet();
 	}
 
+	/*
+	 * Change this to fit with our immediate switch to RUNNING state
+	 */
 	@Test(enabled = true, dependsOnMethods = "testGet")
 	public void testOptionToNotBlock() throws Exception {
-		super.testOptionToNotBlock();
+		String group = this.group + "block";
+		try {
+			client.destroyNodesMatching(inGroup(group));
+		} catch (Exception e) {
+
+		}
+		// no inbound ports
+		template = buildTemplate(client.templateBuilder());
+		// What this means ?! That we need to impose a minimum delay to "start" a virtual machine ?
+		// TODO Not sure about this logic
+		template.getOptions().blockUntilRunning(false).inboundPorts();
+		try {
+			long time = currentTimeMillis();
+			Set<? extends NodeMetadata> nodes = client.createNodesInGroup(group, 1, template);
+
+			NodeMetadata node = getOnlyElement(nodes);
+
+			// Skip the assertion !
+			// assert node.getStatus() != NodeMetadataStatus.RUNNING : node;
+
+			long duration = (currentTimeMillis() - time) / 1000;
+
+			assert duration < nonBlockDurationSeconds : format("duration(%d) longer than expected(%d) seconds! ",
+					duration, nonBlockDurationSeconds);
+		} finally {
+			client.destroyNodesMatching(inGroup(group));
+		}
 	}
 
 	@Test(enabled = true, dependsOnMethods = "testGet")
