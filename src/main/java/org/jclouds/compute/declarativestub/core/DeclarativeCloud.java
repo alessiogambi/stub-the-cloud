@@ -153,6 +153,7 @@ public interface DeclarativeCloud {
 	/**/
 	"return.id", "return.name", "return.group", "return.location", "return.hardware", "return.image"//
 	})
+	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode createNode(String newNodeID, String _name, String _group, DeclarativeLocation _location,
 			DeclarativeHardware _hardware, DeclarativeImage _image);
 
