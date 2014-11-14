@@ -9,15 +9,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.compute.JCloudsNativeComputeServiceAdapter;
-import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
 import org.jclouds.compute.declarativestub.core.DeclarativeNode;
+import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.domain.Location;
-import org.jclouds.domain.LoginCredentials;
 
 import com.google.common.collect.ImmutableList;
 
@@ -35,7 +34,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 
 	// Spec of the Cloud implemented with Squander (MIT)
 	// Possibly this implementation should be injected in the constructor !
-	private final DeclarativeCloud cloud;
+	private final DeclarativeCloudStub cloud;
 
 	// Cached nodes
 	private final Map<String, NodeMetadata> cachedNodes;
@@ -44,7 +43,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	// private final Set<Hardware> cachedHardwares;
 
 	@Inject
-	public DeclarativeStubComputeServiceAdapter(DeclarativeCloud cloud) {
+	public DeclarativeStubComputeServiceAdapter(DeclarativeCloudStub cloud) {
 		this.cloud = cloud;
 		this.cachedNodes = new HashMap<String, NodeMetadata>();
 	}
@@ -93,39 +92,37 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	@Override
 	public NodeWithInitialCredentials createNodeWithGroupEncodedIntoName(String group, String name, Template template) {
 
-		/*
-		 * Use the basic one. TODO Options !
-		 */
-
-		// Allocate a new ID
-		String nodeId = DeclarativeCloud.allocateID();
-
-		DeclarativeNode abstractNode = cloud.createNode(nodeId, group, name, template.getLocation(),
-				template.getHardware(), template.getImage());
-
-		// From the abstract to the concrete node !
-
-		NodeMetadataBuilder builder = new NodeMetadataBuilder();
-		builder.ids("" + abstractNode.getId());
-		builder.location(abstractNode.getLocation());
-		builder.imageId(abstractNode.getImage().getId());
-		builder.status(abstractNode.getStatus());
-		builder.operatingSystem(abstractNode.getImage().getOperatingSystem());
-		builder.name(abstractNode.getName());
-		builder.group(abstractNode.getGroup());
-		// TODO Shortcircuit then add name/group in the spec if needed
-		// Relations with other Concepts
-		builder.credentials(LoginCredentials.builder().user("root").password("id").build());
-		// ?
-		builder.hostname(group);
-		builder.tags(template.getOptions().getTags());
-		builder.userMetadata(template.getOptions().getUserMetadata());
-		// This is what we cache !
-		NodeMetadata node = builder.build();
-		// Cached nodes
-		cachedNodes.put(node.getId(), node);
-
-		return new NodeWithInitialCredentials(node);
+		// // Allocate a new ID
+		// String nodeId = DeclarativeCloudStub.allocateID();
+		//
+		// DeclarativeNode abstractNode = cloud.createNode(nodeId, group, name, template.getLocation(),
+		// template.getHardware(), template.getImage());
+		//
+		// // From the abstract to the concrete node !
+		//
+		// NodeMetadataBuilder builder = new NodeMetadataBuilder();
+		// builder.ids("" + abstractNode.getId());
+		// builder.location(abstractNode.getLocation());
+		// builder.imageId(abstractNode.getImage().getId());
+		// builder.status(abstractNode.getStatus());
+		// builder.operatingSystem(abstractNode.getImage().getOperatingSystem());
+		// builder.name(abstractNode.getName());
+		// builder.group(abstractNode.getGroup());
+		// // TODO Shortcircuit then add name/group in the spec if needed
+		// // Relations with other Concepts
+		// builder.credentials(LoginCredentials.builder().user("root").password("id").build());
+		// // ?
+		// builder.hostname(group);
+		// builder.tags(template.getOptions().getTags());
+		// builder.userMetadata(template.getOptions().getUserMetadata());
+		// // This is what we cache !
+		// NodeMetadata node = builder.build();
+		// // Cached nodes
+		// cachedNodes.put(node.getId(), node);
+		//
+		// return new NodeWithInitialCredentials(node);
+		// TODO
+		return null;
 
 	}
 
@@ -159,9 +156,10 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	 */
 	@Override
 	public Iterable<Hardware> listHardwareProfiles() {
-		System.out.println("DeclarativeStubComputeServiceAdapter.listHardwareProfiles()");
-		return cloud.getAllHardwares();
+		// System.out.println("DeclarativeStubComputeServiceAdapter.listHardwareProfiles()");
+		// return cloud.getAllHardwares();
 		// return cachedHardwares;
+		return null;
 	}
 
 	/**
@@ -172,20 +170,23 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	 */
 	@Override
 	public Iterable<Image> listImages() {
-		System.out.println("DeclarativeStubComputeServiceAdapter.listImages()");
-		return cloud.getAllImages();
+		// System.out.println("DeclarativeStubComputeServiceAdapter.listImages()");
+		// return cloud.getAllImages();
 		// return cachedImages;
+		return null;
 	}
 
 	@Override
 	public Image getImage(String id) {
-		return cloud.getImage(id);
+		// return cloud.getImage(id);
 		// return find(listImages(), ImagePredicates.idEquals(id), null);
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Iterable<Location> listLocations() {
-		return cloud.getAllLocations();
+		// return cloud.getAllLocations();
+		return null;
 	}
 }

@@ -1,0 +1,6 @@
+interface Image {
+
+	@SpecField("id : one String" )
+	@SpecField("location : one DeclarativeLocation" )
+
+}

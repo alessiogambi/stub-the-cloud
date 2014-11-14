@@ -1,6 +1,0 @@
-interface Hardware {
-
-	@SpecField("id : one String")
-	@SpecField("location : one org.jclouds.domain.Location" )
-
-}

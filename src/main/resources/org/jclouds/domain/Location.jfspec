@@ -1,5 +1,0 @@
-interface Location {
-
-	@SpecField("id : one String")	
-
-}

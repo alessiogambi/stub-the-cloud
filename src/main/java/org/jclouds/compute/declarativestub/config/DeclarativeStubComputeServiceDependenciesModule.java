@@ -15,6 +15,7 @@ import javax.inject.Singleton;
 
 import org.jclouds.compute.config.BaseComputeServiceContextModule;
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
+import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
@@ -168,7 +169,8 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 			System.out.println("hardwares " + hardwares);
 			System.out.println("images " + images);
 			System.out.println("===================================");
-			DeclarativeCloud cloud = new DeclarativeCloud(images, hardwares, locations);
+			// Note this !
+			DeclarativeCloud cloud = new DeclarativeCloudStub(images, hardwares, locations);
 			System.out.println("\n\n\n cloud == " + cloud + "\n\n\n");
 			return cloud;
 		} catch (Throwable e) {

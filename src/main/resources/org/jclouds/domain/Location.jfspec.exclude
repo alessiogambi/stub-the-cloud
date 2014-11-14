@@ -1,0 +1,5 @@
+class Location implements DeclarativeLocation {
+
+	@SpecField("id : one String")	
+
+}
