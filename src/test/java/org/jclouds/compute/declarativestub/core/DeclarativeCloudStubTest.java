@@ -43,7 +43,7 @@ public class DeclarativeCloudStubTest {
 	/*
 	 * SUT
 	 */
-	DeclarativeCloudStub cloud;
+	DeclarativeCloud cloud;
 
 	@BeforeMethod
 	public void initializeCloud() {
@@ -368,18 +368,39 @@ public class DeclarativeCloudStubTest {
 
 		DeclarativeImage declarativeImage1 = cloud.getImage(imageId);
 		DeclarativeImage declarativeImage2 = cloud.getImage(imageId);
-		// Assert ID
-		Assert.assertEquals(declarativeImage1.getId(), imageId);
-		Assert.assertEquals(declarativeImage2.getId(), imageId);
 		//
-		System.out.println("DeclarativeCloudStubTest.testGetImage() " + declarativeImage1);
-		System.out.println("DeclarativeCloudStubTest.testGetImage() " + declarativeImage2);
-		Assert.assertNotEquals(declarativeImage1, declarativeImage2, "Same image object !");
+		Assert.assertEquals(declarativeImage1, declarativeImage2, "Not Same image object !");
 		//
-		System.out.println("DeclarativeCloudStubTest.testGetImage() " + declarativeImage1.getLocation());
-		System.out.println("DeclarativeCloudStubTest.testGetImage() " + declarativeImage2.getLocation());
-		Assert.assertNotEquals(declarativeImage1.getLocation(), declarativeImage2.getLocation(),
-				"Same location object !");
+		Assert.assertEquals(declarativeImage1.getLocation(), declarativeImage2.getLocation(),
+				"Not Same location object !");
+	}
+
+	@Test
+	public void testGetHardware() {
+		String hardwareId = createDefaultDeclarativeHardwaresForTest(createDefaultDeclarativeLocationsForTest())
+				.iterator().next().getId();
+
+		DeclarativeHardware declarativeHardware1 = cloud.getHardware(hardwareId);
+		DeclarativeHardware declarativeHardware2 = cloud.getHardware(hardwareId);
+		//
+		Assert.assertEquals(declarativeHardware1, declarativeHardware2, "Not the same hardware object !");
+		//
+		System.out.println("DeclarativeCloudStubTest.testGetImage() " + declarativeHardware1.getLocation());
+		System.out.println("DeclarativeCloudStubTest.testGetImage() " + declarativeHardware2.getLocation());
+		Assert.assertEquals(declarativeHardware1.getLocation(), declarativeHardware2.getLocation(),
+				"Not the same location object !");
+
+		Assert.assertEquals(declarativeHardware1.getLocation().getId(), declarativeHardware2.getLocation().getId());
+	}
+
+	@Test
+	public void testGetLocation() {
+		String locationId = createDefaultDeclarativeLocationsForTest().iterator().next().getId();
+
+		DeclarativeLocation declarativeLocation1 = cloud.getLocation(locationId);
+		DeclarativeLocation declarativeLocation2 = cloud.getLocation(locationId);
+		//
+		Assert.assertEquals(declarativeLocation1, declarativeLocation2, "Not Same image object !");
 	}
 
 	@Test

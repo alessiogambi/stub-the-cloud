@@ -9,14 +9,19 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.compute.JCloudsNativeComputeServiceAdapter;
+import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
+import org.jclouds.compute.declarativestub.core.DeclarativeHardware;
+import org.jclouds.compute.declarativestub.core.DeclarativeImage;
+import org.jclouds.compute.declarativestub.core.DeclarativeLocation;
 import org.jclouds.compute.declarativestub.core.DeclarativeNode;
-import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.domain.Location;
+import org.jclouds.domain.LoginCredentials;
 
 import com.google.common.collect.ImmutableList;
 
@@ -34,7 +39,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 
 	// Spec of the Cloud implemented with Squander (MIT)
 	// Possibly this implementation should be injected in the constructor !
-	private final DeclarativeCloudStub cloud;
+	private final DeclarativeCloud cloud;
 
 	// Cached nodes
 	private final Map<String, NodeMetadata> cachedNodes;
@@ -43,7 +48,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	// private final Set<Hardware> cachedHardwares;
 
 	@Inject
-	public DeclarativeStubComputeServiceAdapter(DeclarativeCloudStub cloud) {
+	public DeclarativeStubComputeServiceAdapter(DeclarativeCloud cloud) {
 		this.cloud = cloud;
 		this.cachedNodes = new HashMap<String, NodeMetadata>();
 	}
@@ -91,38 +96,39 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 
 	@Override
 	public NodeWithInitialCredentials createNodeWithGroupEncodedIntoName(String group, String name, Template template) {
+		// Prepare the data !
+		// Allocate a new ID
+		String nodeId = DeclarativeCloud.FactoryId.allocateID();
 
-		// // Allocate a new ID
-		// String nodeId = DeclarativeCloudStub.allocateID();
+		DeclarativeLocation location = cloud.getLocation(template.getLocation().getId());
+		DeclarativeImage image = cloud.getImage(template.getImage().getId());
+		DeclarativeHardware hardware = cloud.getHardware(template.getHardware().getId());
+
+		// Create a new node given all the parameters !
+		DeclarativeNode node = cloud.createNode(nodeId, name, group, location, hardware, image);
+
+		// Prepare the output !
+
+		NodeMetadataBuilder builder = new NodeMetadataBuilder();
+		builder.ids(node.getId());
+		builder.name(node.getName());
+		builder.group(node.getGroup());
+		builder.imageId(node.getImage().getId());
 		//
-		// DeclarativeNode abstractNode = cloud.createNode(nodeId, group, name, template.getLocation(),
-		// template.getHardware(), template.getImage());
-		//
-		// // From the abstract to the concrete node !
-		//
-		// NodeMetadataBuilder builder = new NodeMetadataBuilder();
-		// builder.ids("" + abstractNode.getId());
-		// builder.location(abstractNode.getLocation());
-		// builder.imageId(abstractNode.getImage().getId());
-		// builder.status(abstractNode.getStatus());
-		// builder.operatingSystem(abstractNode.getImage().getOperatingSystem());
-		// builder.name(abstractNode.getName());
-		// builder.group(abstractNode.getGroup());
-		// // TODO Shortcircuit then add name/group in the spec if needed
-		// // Relations with other Concepts
-		// builder.credentials(LoginCredentials.builder().user("root").password("id").build());
-		// // ?
-		// builder.hostname(group);
-		// builder.tags(template.getOptions().getTags());
-		// builder.userMetadata(template.getOptions().getUserMetadata());
-		// // This is what we cache !
-		// NodeMetadata node = builder.build();
-		// // Cached nodes
-		// cachedNodes.put(node.getId(), node);
-		//
-		// return new NodeWithInitialCredentials(node);
-		// TODO
-		return null;
+		builder.location(template.getLocation());
+		builder.status(NodeMetadataStatus.RUNNING);
+		builder.operatingSystem(template.getImage().getOperatingSystem());
+		builder.credentials(LoginCredentials.builder().user("root").password("id").build());
+		builder.hostname(group);
+		builder.tags(template.getOptions().getTags());
+		builder.userMetadata(template.getOptions().getUserMetadata());
+
+		// This is what we cache !
+		NodeMetadata nodeMetadata = builder.build();
+		// Cached nodes
+		cachedNodes.put(nodeMetadata.getId(), nodeMetadata);
+
+		return new NodeWithInitialCredentials(nodeMetadata);
 
 	}
 

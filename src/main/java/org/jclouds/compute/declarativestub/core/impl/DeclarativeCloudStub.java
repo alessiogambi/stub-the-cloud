@@ -2,7 +2,6 @@ package org.jclouds.compute.declarativestub.core.impl;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
 import org.jclouds.compute.declarativestub.core.DeclarativeHardware;
@@ -30,16 +29,7 @@ public class DeclarativeCloudStub implements DeclarativeCloud {
 
 	// Not sure this pattern is ok !
 	public DeclarativeNode createNode() {
-		return createNode(allocateID());
-	}
-
-	/*
-	 * Since it is not possible to create random strings we use a generative naive approach
-	 */
-	final static private AtomicInteger currentId = new AtomicInteger();
-
-	public static String allocateID() {
-		return "" + currentId.incrementAndGet();
+		return createNode(FactoryId.allocateID());
 	}
 
 	public DeclarativeCloudStub(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
@@ -196,6 +186,22 @@ public class DeclarativeCloudStub implements DeclarativeCloud {
 	public void suspendNode(String _id) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public DeclarativeLocation getLocation(String _id) {
+		return Squander.exe(this, _id);
+	}
+
+	@Override
+	public DeclarativeHardware getHardware(String _id) {
+		return Squander.exe(this, _id);
+	}
+
+	@Override
+	public DeclarativeNode createNode(String newNodeID, String _name, String _group, DeclarativeLocation _location,
+			DeclarativeHardware _hardware, DeclarativeImage _image) {
+		return Squander.exe(this, newNodeID, _name, _group, _location, _hardware, _image);
 	}
 
 }
