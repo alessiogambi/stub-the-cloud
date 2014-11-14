@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.jclouds.compute.declarativestub.core.DeclarativeCloud.FactoryId;
 import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
@@ -220,6 +221,41 @@ public class DeclarativeCloudStubTest {
 	}
 
 	@Test
+	public void testCreateNodeWithParameters() {
+		// Prepare the inputs
+		String newNodeID = FactoryId.allocateID();
+		String _name = "test";
+		String _group = "test";
+		DeclarativeLocation _location = cloud.getAllLocations().iterator().next();
+		DeclarativeHardware _hardware = cloud.getAllHardwares().iterator().next();
+		DeclarativeImage _image = cloud.getAllImages().iterator().next();
+
+		// Exec
+		DeclarativeNode node = cloud.createNode(newNodeID, _name, _group, _location, _hardware, _image);
+
+		System.out.println("DeclarativeCloudStubTest.testCreateNodeWithParameters() " + node);
+	}
+
+	@Test
+	public void testCreateNodesWithParameters() {
+		// Prepare the inputs
+		String newNodeID_1 = FactoryId.allocateID();
+		String newNodeID_2 = FactoryId.allocateID();
+		String _name = "test";
+		String _group = "test";
+		DeclarativeLocation _location = cloud.getAllLocations().iterator().next();
+		DeclarativeHardware _hardware = cloud.getAllHardwares().iterator().next();
+		DeclarativeImage _image = cloud.getAllImages().iterator().next();
+
+		// Exec
+		DeclarativeNode node_1 = cloud.createNode(newNodeID_1, _name, _group, _location, _hardware, _image);
+		DeclarativeNode node_2 = cloud.createNode(newNodeID_2, _name, _group, _location, _hardware, _image);
+
+		System.out.println("DeclarativeCloudStubTest.testCreateNodeWithParameters() " + node_1);
+		System.out.println("DeclarativeCloudStubTest.testCreateNodeWithParameters() " + node_2);
+	}
+
+	@Test
 	public void testFailCreateNodeIfNoDeclarativeImages() {
 		try {
 			cloud = new DeclarativeCloudStub();
@@ -403,7 +439,7 @@ public class DeclarativeCloudStubTest {
 		Assert.assertEquals(declarativeLocation1, declarativeLocation2, "Not Same image object !");
 	}
 
-	@Test
+	@Test(enabled = false, description = "Now getImage has no preconditions as it returns false !")
 	public void testgetImagePreCondFail() {
 		try {
 			String wrongID = "";
@@ -417,6 +453,14 @@ public class DeclarativeCloudStubTest {
 				throw e;
 			}
 		}
+	}
+
+	@Test(dependsOnMethods = "testCreateRandomNode")
+	public void testGetNodeByIDReturnNull() {
+		// EXEC
+		DeclarativeNode _n = cloud.getNode("");
+		// Assert ID
+		Assert.assertNull(_n);
 	}
 
 	@Test(dependsOnMethods = "testCreateRandomNode")

@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.mit.csail.sdg.annotations.Ensures;
-import edu.mit.csail.sdg.annotations.Fresh;
 import edu.mit.csail.sdg.annotations.FreshObjects;
 import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
@@ -53,13 +52,19 @@ import edu.mit.csail.sdg.annotations.SpecField;
 public interface DeclarativeCloud {
 
 	/*
-	 * Since it is not possible to create random strings we use a generative naive approach
+	 * Since it is not possible to create random strings we use a generative naive approach. The test assume that this
+	 * atomic integer will be reset everytime we create an instance of cloud
 	 */
 	public static class FactoryId {
-		final static private AtomicInteger currentId = new AtomicInteger();
+		final static private AtomicInteger currentId = new AtomicInteger(0);
 
 		public static String allocateID() {
 			return "" + currentId.incrementAndGet();
+		}
+
+		// Only for Testing
+		public static void resetID() {
+			currentId.set(0);
 		}
 	}
 
@@ -180,35 +185,46 @@ public interface DeclarativeCloud {
 	@Modifies({ "this.instances", })
 	public void removeNode(String _id);
 
-	@Requires({
+	/**
+	 * 
+	 * @param _id
+	 * @return The node or null if it is not there
+	 */
+	// Preconditions are not required anymore, but they were somehow verified even if the cloud state should have
+	// falsified them !
+	// @Requires({
 	/*
 	 * At least one instances are deployed
 	 */
-	"some this.instances",
+	// "some this.instances",
 	/*
 	 * The id must be one of deployed instances
 	 */
-	"return.id in this.instances.id" })
+	// "return.id in this.instances.id" -> not required
+	// })
 	/*
 	 * Return a Copy or the Object ?! Ideally it should be a copy to avoid side effects on the cloud, however it should
-	 * ne a deep copy !!
+	 * ne a deep copy !! For the moment just return THE node
 	 */
 	@Ensures({
-			/* Matching conditions */
-			"one instance : this.instances | instance.id=_id && ( return.id = instance.id && return.image=instance.image && return.location=instance.location && return.hardware = instance.hardware )",
-			/* Return the new instance. Note that this is shallow for the moment */
-			"return ! in this.instances" })
-	@Modifies({ "return.id", "return.image", "return.location", "return.hardware" })
-	@FreshObjects(cls = DeclarativeNode.class, num = 1)
+	/* Matching conditions */
+	// one instance : this.instances | instance.id=_id && ( return.id = instance.id && return.image=instance.image &&
+	// return.location=instance.location && return.hardware = instance.hardware )",
+	"return - null = { instance : this.instances | instance.id=_id }",
+	/* Return the new instance. Note that this is shallow for the moment */
+	// "return ! in this.instances"
+	})
+	// @Modifies({ "return.id", "return.image", "return.location", "return.hardware" })
+	// @FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode getNode(String _id);
 
-	@Requires({
-			// At least one VM
-			"some this.images",
-			// The node must be in the running nodes
-			"_id in this.images.id" })
+	// @Requires({
+	// // At least one VM
+	// "some this.images",
+	// // The node must be in the running nodes
+	// "_id in this.images.id" })
 	/* Not sure we need to force a fresh instance of Location as well */
-	@Ensures({ "one image : this.images | image.id=_id && return.id = image.id && return.location.id = image.location.id",
+	@Ensures({ "return - null = {image : this.images | image.id=_id }",
 	// "return ! in this.images && return.location ! in this.locations"
 	})
 	// @Modifies({
@@ -235,13 +251,19 @@ public interface DeclarativeCloud {
 	// @FreshObjects(cls = DeclarativeLocation.class, num = 1)
 	public DeclarativeLocation getLocation(String _id);
 
-	@Requires({
-			// At least one VM
-			"some this.hardwares",
-			// The node must be in the running nodes
-			"_id in this.hardwares.id" })
+	/**
+	 * 
+	 * @param _id
+	 * @return The Hardware or null
+	 */
+	// @Requires({
+	// At least one VM
+	// "some this.hardwares",
+	// The node must be in the running nodes
+	// "_id in this.hardwares.id"
+	// })
 	/* Not sure we need to force a fresh instance of Location as well */
-	@Ensures({ "one hardware : this.hardwares | hardware.id=_id && return.id = hardware.id && return.location.id = hardware.location.id",
+	@Ensures({ "return - null = { hardware : this.hardwares | hardware.id=_id }",
 	// /* Force fresh objects */
 	// "return ! in this.hardwares && return.location ! in this.locations"
 	})

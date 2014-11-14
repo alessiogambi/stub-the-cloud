@@ -1,6 +1,6 @@
 package org.jclouds.compute.declarativestub.config;
 
-import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -15,6 +15,7 @@ import javax.inject.Singleton;
 
 import org.jclouds.compute.config.BaseComputeServiceContextModule;
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
+import org.jclouds.compute.declarativestub.core.DeclarativeNode;
 import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
@@ -22,7 +23,6 @@ import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.OperatingSystem;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Processor;
@@ -77,6 +77,7 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 			});
 
 	@Provides
+	@Singleton
 	private Set<Location> providesLocations(Supplier<Location> location) {
 		// Empty location is fine ?!
 		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
@@ -91,15 +92,13 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 	//
 
 	@Provides
+	@Singleton
 	protected Set<Image> providesImages(Set<Location> locations, Map<OsFamily, Map<String, String>> osToVersionMap) {
 		Location location = locations.iterator().next();
 		ImmutableSet.Builder<Image> images = ImmutableSet.<Image> builder();
 		int id = 1;
 
 		// Let's work only with few images first !
-
-		int count = 0;
-		// TODO
 		int MAX_Count = 2;
 
 		for (boolean is64Bit : new boolean[] { true, false }) {
@@ -122,20 +121,17 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 
 					images.add(image);
 
-					count = count + 1;
-					if (count == MAX_Count) {
-						break;
-					}
 				}
-				if (count == MAX_Count) {
-					break;
-				}
-			}
-			if (count == MAX_Count) {
-				break;
 			}
 		}
-		return images.build();
+		// Now Take only the first MAX_Count
+		ImmutableSet.Builder<Image> filteredImages = ImmutableSet.<Image> builder();
+		int c = 0;
+		Iterator<Image> i = images.build().iterator();
+		while (c < MAX_Count && i.hasNext()) {
+			filteredImages.add(i.next());
+		}
+		return filteredImages.build();
 	}
 
 	@Provides
@@ -159,32 +155,47 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 		return flavors.build();
 	}
 
-	@Provides
+	protected static DeclarativeCloud detachedCloud;
+
 	@Singleton
+	@Provides
+	@Named("DETACHED_CLOUD")
 	protected DeclarativeCloud providesCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
-		try {
+		System.out.println("DeclarativeStubComputeServiceDependenciesModule.providesCloud()");
+		if (detachedCloud == null) {
 			System.out
-					.println("\n\n\nDeclarativeStubComputeServiceAdapter.DeclarativeStubComputeServiceAdapter()\n\n\n");
-			System.out.println("location " + locations);
-			System.out.println("hardwares " + hardwares);
-			System.out.println("images " + images);
-			System.out.println("===================================");
-			// Note this !
-			DeclarativeCloud cloud = new DeclarativeCloudStub(images, hardwares, locations);
-			System.out.println("\n\n\n cloud == " + cloud + "\n\n\n");
-			return cloud;
-		} catch (Throwable e) {
-			e.printStackTrace();
-			System.out.println("DeclarativeStubComputeServiceDependenciesModule.providesCloud() WAIT USER INPUT: ");
-			try {
-				System.in.read();
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			throw new RuntimeException(e);
+					.println("DeclarativeStubComputeServiceDependenciesModule.providesDetachedCloud() CREATING DETACHED CLOUD");
+			detachedCloud = new DeclarativeCloudStub(images, hardwares, locations);
 		}
+		return detachedCloud;
 	}
+
+	// @Provides
+	// @Singleton
+	// protected DeclarativeCloud providesCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
+	// try {
+	// System.out
+	// .println("\n\n\nDeclarativeStubComputeServiceAdapter.DeclarativeStubComputeServiceAdapter()\n\n\n");
+	// System.out.println("location " + locations);
+	// System.out.println("hardwares " + hardwares);
+	// System.out.println("images " + images);
+	// System.out.println("===================================");
+	// // Note this !
+	// DeclarativeCloud cloud = new DeclarativeCloudStub(images, hardwares, locations);
+	// System.out.println("\n\n\n cloud == " + cloud + "\n\n\n");
+	// return cloud;
+	// } catch (Throwable e) {
+	// e.printStackTrace();
+	// System.out.println("DeclarativeStubComputeServiceDependenciesModule.providesCloud() WAIT USER INPUT: ");
+	// try {
+	// System.in.read();
+	// } catch (IOException e1) {
+	// // TODO Auto-generated catch block
+	// e1.printStackTrace();
+	// }
+	// throw new RuntimeException(e);
+	// }
+	// }
 
 	@Provides
 	@Singleton
@@ -298,23 +309,42 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 
 	@Singleton
 	public static class StubSocketOpen implements SocketOpen {
-		private final ConcurrentMap<String, NodeMetadata> nodes;
+		// private final ConcurrentMap<String, NodeMetadata> nodes;
 		private final String publicIpPrefix;
+		private final DeclarativeCloud cloud;
 
 		@Inject
-		public StubSocketOpen(ConcurrentMap<String, NodeMetadata> nodes,
-				@Named("PUBLIC_IP_PREFIX") String publicIpPrefix) {
-			this.nodes = nodes;
+		public StubSocketOpen(
+		// ConcurrentMap<String, NodeMetadata> nodes,
+				@Named("DETACHED_CLOUD") DeclarativeCloud cloud, @Named("PUBLIC_IP_PREFIX") String publicIpPrefix) {
+			System.err.println("DeclarativeStubComputeServiceDependenciesModule.StubSocketOpen.StubSocketOpen()");
+			// this.nodes = nodes;
 			this.publicIpPrefix = publicIpPrefix;
+			this.cloud = cloud;
 		}
 
 		@Override
 		public boolean apply(HostAndPort input) {
-			if (input.getHostText().indexOf(publicIpPrefix) == -1)
+			System.err.println("DeclarativeStubComputeServiceDependenciesModule.StubSocketOpen.apply() "
+					+ input.getHostText() + " " + publicIpPrefix);
+			if (input.getHostText().indexOf(publicIpPrefix) == -1) {
+				System.err.println("FALSE !");
 				return false;
+			}
+			// Not the best matching but it should be fine
 			String id = input.getHostText().replace(publicIpPrefix, "");
-			NodeMetadata node = nodes.get(id);
-			return node != null && node.getStatus() == NodeMetadataStatus.RUNNING;
+
+			// NodeMetadata node = nodes.get(id);
+			// return node != null && node.getStatus() == NodeMetadataStatus.RUNNING;
+			try {
+				DeclarativeNode node = cloud.getNode(id);
+				// TODO node.getStatus()
+				return node != null;
+			} catch (Throwable t) {
+				t.printStackTrace();
+				return false;
+			}
+
 		}
 	}
 

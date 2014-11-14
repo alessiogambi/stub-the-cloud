@@ -74,10 +74,16 @@ public class DeclarativeCloudStub implements DeclarativeCloud {
 		}
 
 		init(dImages, dHardwares, dLocations);
+		// Reset the counter, assuming there is only 1 CLOUD
+		// DeclarativeCloud.FactoryId.resetID();
+
 	}
 
 	public DeclarativeCloudStub() {
 		init();
+		// Reset the counter, assuming there is only 1 CLOUD
+		// DeclarativeCloud.FactoryId.resetID();
+
 	}
 
 	/*
@@ -201,7 +207,9 @@ public class DeclarativeCloudStub implements DeclarativeCloud {
 	@Override
 	public DeclarativeNode createNode(String newNodeID, String _name, String _group, DeclarativeLocation _location,
 			DeclarativeHardware _hardware, DeclarativeImage _image) {
+		// Must the cloud be synchronized ?! I think so :(
+		System.out.println(String.format("DeclarativeCloudStub.createNode( %s %s %s %s %s %s)", newNodeID, _name,
+				_group, _location.getId(), _hardware.getId(), _image.getId()));
 		return Squander.exe(this, newNodeID, _name, _group, _location, _hardware, _image);
 	}
-
 }

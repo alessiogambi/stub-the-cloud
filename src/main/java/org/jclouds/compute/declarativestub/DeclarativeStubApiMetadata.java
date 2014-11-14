@@ -6,7 +6,6 @@ import org.jclouds.apis.ApiMetadata;
 import org.jclouds.apis.internal.BaseApiMetadata;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.declarativestub.config.DeclarativeStubComputeServiceContextModule;
-import org.jclouds.compute.stub.config.StubComputeServiceContextModule;
 
 /**
  * Implementation of {@link ApiMetadata} for jclouds in-memory (Stub) API
@@ -34,19 +33,11 @@ public class DeclarativeStubApiMetadata extends BaseApiMetadata {
 	public static class Builder extends BaseApiMetadata.Builder<Builder> {
 
 		protected Builder() {
-			id("declarative-stub")
-					.name("declarative in-memory (Stub) API")
-					.identityName("Unused")
-					.defaultIdentity("declarative-stub")
-					.defaultCredential("declarative-stub")
+			id("declarative-stub").name("declarative in-memory (Stub) API").identityName("Unused")
+					.defaultIdentity("declarative-stub").defaultCredential("declarative-stub")
 					.defaultEndpoint("local-memory")
-					.documentation(
-							URI.create("http://www.infosys.tuwien.ac.at/staff/agambi/blog/"))
-					.view(ComputeServiceContext.class)
-					// Not sure about the meaning of this module, maybe it
-					// provides implementations of ComputeServiceContext method.
-					.defaultModule(
-							DeclarativeStubComputeServiceContextModule.class);
+					.documentation(URI.create("http://www.infosys.tuwien.ac.at/staff/agambi/blog/"))
+					.view(ComputeServiceContext.class).defaultModule(DeclarativeStubComputeServiceContextModule.class);
 
 		}
 

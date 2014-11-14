@@ -4,8 +4,7 @@ import org.jclouds.compute.config.JCloudsNativeComputeServiceAdapterContextModul
 import org.jclouds.concurrent.SingleThreaded;
 
 @SingleThreaded
-public class DeclarativeStubComputeServiceContextModule extends
-		JCloudsNativeComputeServiceAdapterContextModule {
+public class DeclarativeStubComputeServiceContextModule extends JCloudsNativeComputeServiceAdapterContextModule {
 
 	public DeclarativeStubComputeServiceContextModule() {
 		// This is basically the implementation of the CLIENT invoking the Cloud

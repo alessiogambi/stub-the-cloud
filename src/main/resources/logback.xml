@@ -11,31 +11,27 @@
 
 	<logger name="org.jclouds">
 		<level value="DEBUG" />
-		<appender-ref ref="FILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
 
 	<logger name="jclouds.compute">
 		<level value="DEBUG" />
-		<appender-ref ref="COMPUTEFILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
-
 	<logger name="jclouds.wire">
 		<level value="DEBUG" />
-		<appender-ref ref="WIREFILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
-
 	<logger name="jclouds.headers">
 		<level value="DEBUG" />
-		<appender-ref ref="WIREFILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
-
 	<logger name="jclouds.ssh">
 		<level value="DEBUG" />
-		<appender-ref ref="SSHFILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
-
 	<logger name="net.schmizz">
 		<level value="DEBUG" />
-		<appender-ref ref="SSHFILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
 </configuration>

@@ -16,26 +16,31 @@
  */
 package org.jclouds.compute;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reportMatcher;
+import static org.jclouds.util.Predicates2.retry;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.easymock.IArgumentMatcher;
 import org.jclouds.compute.config.AdminAccessConfiguration;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.internal.BaseComputeServiceLiveTest;
+import org.jclouds.compute.util.OpenSocketFinder;
 import org.jclouds.crypto.Pems;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.io.Payload;
+import org.jclouds.predicates.SocketOpen;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.SshClient;
 import org.jclouds.util.Strings2;
@@ -53,6 +58,15 @@ import com.google.inject.Module;
 import edu.mit.csail.sdg.squander.log.Log.Level;
 import edu.mit.csail.sdg.squander.options.SquanderGlobalOptions;
 
+/**
+ * The problem with those tests is that they are supposed to be live, that is, the cloud is detached from the execution.
+ * With a declarative stub, we can remove all the dependencies simply "assuming" a given state of the cloud, which
+ * corresponds to the one provided by the depend-upon test. However, at execution time, we just need to set the heap
+ * right, and that's it
+ * 
+ * @author alessiogambi
+ *
+ */
 @Test(groups = "live", testName = "DeclarativeStubComputeServiceIntegrationTest")
 public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeServiceLiveTest {
 
@@ -61,16 +75,51 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 	private static final ExecResponse EXEC_RC_GOOD = new ExecResponse("0", "", 0);
 
 	public DeclarativeStubComputeServiceIntegrationTest() {
-		SquanderGlobalOptions.INSTANCE.log_level = Level.DEBUG;
-		// SquanderGlobalOptions.INSTANCE.noOverflow = true;
-		SquanderGlobalOptions.INSTANCE.min_bitwidth = 14;
+		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
+		SquanderGlobalOptions.INSTANCE.noOverflow = true;
+		SquanderGlobalOptions.INSTANCE.min_bitwidth = 5;
 		provider = "declarative-stub";
 	}
 
+	@Override
+	public void testCorrectAuthException() throws Exception {
+	}
+
+	protected void buildSocketTester() {
+		SocketOpen socketOpen = createMock(SocketOpen.class);
+
+		expect(socketOpen.apply(HostAndPort.fromParts("144.175.1.1", 22))).andReturn(true).times(5);
+
+		replay(socketOpen);
+
+		socketTester = retry(socketOpen, 1, 1, MILLISECONDS);
+
+		openSocketFinder = new OpenSocketFinder() {
+
+			@Override
+			public HostAndPort findOpenSocketOnNode(NodeMetadata node, int port, long timeoutValue, TimeUnit timeUnits) {
+				return HostAndPort.fromParts("144.175.1.1", 8080);
+			}
+
+		};
+	}
+
+	@Override
+	protected void checkHttpGet(NodeMetadata node) {
+
+	}
+
+	@Override
 	protected Module getSshModule() {
 		return new AbstractModule() {
 			@Override
 			protected void configure() {
+
+				System.out
+						.println("\n=====================================================\n"
+								+ "DeclarativeStubComputeServiceIntegrationTest.getSshModule().new AbstractModule() {...}.configure()\n"
+								+ "=====================================================\n");
+
 				bind(AdminAccessConfiguration.class).toInstance(new AdminAccessConfiguration() {
 					public Supplier<String> defaultAdminUsername() {
 						return Suppliers.ofInstance("defaultAdminUsername");
@@ -93,6 +142,7 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 						return Suppliers.ofInstance("randompassword");
 					}
 				});
+
 				SshClient.Factory factory = createMock(SshClient.Factory.class);
 				SshClient client1 = createMock(SshClient.class);
 				SshClient client1New = createMock(SshClient.class);
@@ -398,11 +448,6 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 
 	}
 
-	@Test
-	public void testImageById() {
-		super.testImageById();
-	};
-
 	@Override
 	protected void setupKeyPairForTest() {
 		keyPair = ImmutableMap.<String, String> of("public", "ssh-rsa", "private", "-----BEGIN RSA PRIVATE KEY-----");
@@ -449,7 +494,6 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 
 	@Test(enabled = true, dependsOnMethods = "testCreateTwoNodesWithRunScript")
 	public void testCreateAnotherNodeWithANewContextToEnsureSharedMemIsntRequired() throws Exception {
-
 		super.testCreateAnotherNodeWithANewContextToEnsureSharedMemIsntRequired();
 	}
 
@@ -463,7 +507,8 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 		super.testCredentialsCache();
 	}
 
-	@Test(enabled = true, dependsOnMethods = "testCreateAnotherNodeWithANewContextToEnsureSharedMemIsntRequired")
+	@Test(enabled = true, dependsOnMethods = { "testConcurrentUseOfComputeServiceToCreateNodes",
+			"testCreateTwoNodesWithRunScript", "testCreateAnotherNodeWithANewContextToEnsureSharedMemIsntRequired" })
 	public void testGet() throws Exception {
 		super.testGet();
 	}
@@ -506,11 +551,6 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 	@Test(enabled = true, dependsOnMethods = { "testListNodes", "testGetNodesWithDetails", "testListNodesByIds" })
 	public void testDestroyNodes() {
 		super.testDestroyNodes();
-	}
-
-	@Test
-	public void testListImages() throws Exception {
-		super.testListImages();
 	}
 
 }
