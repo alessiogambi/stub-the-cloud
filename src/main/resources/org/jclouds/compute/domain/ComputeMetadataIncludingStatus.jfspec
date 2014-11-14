@@ -1,0 +1,5 @@
+interface ComputeMetadataIncludingStatus {
+
+	@SpecField("status : one org.jclouds.compute.domain.ImageStatus")
+
+}

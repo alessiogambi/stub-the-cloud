@@ -1,0 +1,5 @@
+interface ResourceMetadata {
+
+	@SpecField("location : one org.jclouds.domain.Location")
+
+}
