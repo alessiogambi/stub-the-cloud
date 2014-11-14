@@ -123,13 +123,12 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 				.name(node.getName())//
 				.group(node.getGroup())//
 				.imageId(node.getImage().getId())//
+				.status(node.getStatus())//
 				// NOT SURE
 				.hostname(node.getGroup())//
 				// The address here must match the one in the expect !
 				.privateAddresses(ImmutableSet.<String> builder().add(privateIpPrefix + node.getId()).build())//
 				.publicAddresses(ImmutableSet.<String> builder().add(publicIpPrefix + node.getId()).build())//
-				// DEFAULT VALUE FOR NOW
-				.status(NodeMetadataStatus.RUNNING)//
 				// The passwors must match the ones in the expect
 				.credentials(LoginCredentials.builder().user("root").password("password" + node.getId()).build())//
 				.location(location)//

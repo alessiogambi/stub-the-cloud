@@ -18,7 +18,7 @@ import edu.mit.csail.sdg.annotations.SpecField;
  */
 @SpecField({
 /*
- * All the VM deployed in the cloud
+ * All the instance deployed in the cloud
  */
 "instances : set DeclarativeNode",
 /*
@@ -35,7 +35,7 @@ import edu.mit.csail.sdg.annotations.SpecField;
 "locations : set DeclarativeLocation" })
 @Invariant({
 /* All the Resources must have unique ID */
-"all vmA : this.instances | all vmB : this.instances - vmA | vmA.id != vmB.id",
+"all instanceA : this.instances | all instanceB : this.instances - instanceA | instanceA.id != instanceB.id",
 		"all imageA : this.images | all imageB : this.images - imageA | imageA.id != imageB.id",
 		"all hardwareA : this.hardwares | all hardwareB : this.hardwares - hardwareA | hardwareA.id != hardwareB.id",
 		"all locationA : this.locations | all locationB : this.locations - locationA | locationA.id != locationB.id",
@@ -109,6 +109,8 @@ public interface DeclarativeCloud {
 	 * Deploy the new node with given ID and RUNNING state
 	 */
 	"this.instances = @old(this.instances) + return && #this.instances = @old(#this.instances) + 1",
+	/**/
+	"return.status = org.jclouds.compute.domain.NodeMetadataStatus.RUNNING",
 	/*
 	 * Keep the given ID
 	 */
@@ -130,7 +132,7 @@ public interface DeclarativeCloud {
 	/* */
 	"this.instances",
 	/**/
-	"return.id", "return.image", "return.location", "return.hardware"//
+	"return.id", "return.image", "return.location", "return.hardware", "return.status"//
 	})
 	@FreshObjects(cls = DeclarativeNode.class, num = 1)
 	public DeclarativeNode createNode(String newNodeID);
@@ -170,7 +172,7 @@ public interface DeclarativeCloud {
 	 */
 	@Requires({
 	/*
-	 * At least one VM
+	 * At least one instance
 	 */
 	"some this.instances",
 	/*
@@ -219,7 +221,7 @@ public interface DeclarativeCloud {
 	public DeclarativeNode getNode(String _id);
 
 	// @Requires({
-	// // At least one VM
+	// // At least one instance
 	// "some this.images",
 	// // The node must be in the running nodes
 	// "_id in this.images.id" })
@@ -257,7 +259,7 @@ public interface DeclarativeCloud {
 	 * @return The Hardware or null
 	 */
 	// @Requires({
-	// At least one VM
+	// At least one instance
 	// "some this.hardwares",
 	// The node must be in the running nodes
 	// "_id in this.hardwares.id"
@@ -279,12 +281,12 @@ public interface DeclarativeCloud {
 	public DeclarativeHardware getHardware(String _id);
 
 	@Requires({
-			// At least one VM
+			// At least one instance
 			"some this.instances",
 			// The node must exist
-			"one vm : this.instances | vm.id == _id" })
-	@Ensures({ "one vm : this.instances | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)" })
-	@Modifies({ "DeclarativeNode.status [{vm : this.instances | vm.id == _id}]" })
+			"one instance : this.instances | instance.id == _id" })
+	@Ensures({ "one instance : this.instances | ( instance.id == _id && instance.status =  org.jclouds.compute.domain.NodeMetadataStatus.RUNNING)" })
+	@Modifies({ "DeclarativeNode.status [{instance : this.instances | instance.id == _id}]" })
 	/**
 	 * This call is idempotent
 	 * @param _id
@@ -292,12 +294,12 @@ public interface DeclarativeCloud {
 	public void startNode(String _id);
 
 	@Requires({
-			// At least one VM
+			// At least one instance
 			"some this.instances",
 			// The node must exist
-			"one vm : this.instances | vm.id == _id" })
-	@Ensures({ "one vm : this.instances | ( vm.id == _id && vm.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED )" })
-	@Modifies({ "DeclarativeNode.status [{vm : this.instances | vm.id == _id}]" })
+			"one instance : this.instances | instance.id == _id" })
+	@Ensures({ "one instance : this.instances | ( instance.id == _id && instance.status =  org.jclouds.compute.domain.NodeMetadataStatus.SUSPENDED )" })
+	@Modifies({ "DeclarativeNode.status [{instance : this.instances | instance.id == _id}]" })
 	/**
 	 * This call is idempotent
 	 * @param _id

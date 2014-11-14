@@ -1,5 +1,7 @@
 package org.jclouds.compute.declarativestub.core;
 
+import org.jclouds.compute.domain.NodeMetadataStatus;
+
 public class DeclarativeNode extends DeclarativeResource {
 
 	public String toString() {
@@ -15,6 +17,9 @@ public class DeclarativeNode extends DeclarativeResource {
 	private DeclarativeImage image;
 	private DeclarativeLocation location;
 	private DeclarativeHardware hardware;
+
+	// Are we polluting this with implementation details ?
+	private NodeMetadataStatus status;
 
 	public DeclarativeHardware getHardware() {
 		return hardware;
@@ -54,5 +59,9 @@ public class DeclarativeNode extends DeclarativeResource {
 
 	public void setGroup(String group) {
 		this.group = group;
+	}
+
+	public NodeMetadataStatus getStatus() {
+		return this.status;
 	}
 }

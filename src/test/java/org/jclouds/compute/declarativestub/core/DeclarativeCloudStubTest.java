@@ -11,6 +11,7 @@ import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.ImageStatus;
+import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.OperatingSystem;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Processor;
@@ -537,7 +538,7 @@ public class DeclarativeCloudStubTest {
 		//
 		cloud.suspendNode(n.getId());
 		//
-		// Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
+		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 	}
 
 	@Test(dependsOnMethods = "testCreateRandomNode")

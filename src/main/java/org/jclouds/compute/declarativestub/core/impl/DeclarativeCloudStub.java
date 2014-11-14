@@ -184,13 +184,13 @@ public class DeclarativeCloudStub implements DeclarativeCloud {
 	/* Images Status Update */
 	@Override
 	public void startNode(String _id) {
-		// TODO Auto-generated method stub
+		Squander.exe(this, _id);
 
 	}
 
 	@Override
 	public void suspendNode(String _id) {
-		// TODO Auto-generated method stub
+		Squander.exe(this, _id);
 
 	}
 
