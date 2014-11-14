@@ -54,9 +54,9 @@ public class DeclarativeCloudTest {
 	public static void injectObjectSerializers() {
 		//
 		// ObjSerFactory.addSer(new ImageImplSer());
-		ObjSerFactory.addSer(new ImageSer());
-		ObjSerFactory.addSer(new HardwareSer());
-		ObjSerFactory.addSer(new LocationSer());
+		// ObjSerFactory.addSer(new ImageSer());
+		// ObjSerFactory.addSer(new HardwareSer());
+		// ObjSerFactory.addSer(new LocationSer());
 	}
 
 	@BeforeMethod
@@ -458,26 +458,17 @@ public class DeclarativeCloudTest {
 		Assert.assertTrue(containsID(nodes, n2));
 	}
 
-	// @Test
-	// public void testGetNode() {
-	// DeclarativeNode n = cloud.createNode();
-	// // Return the right node
-	// DeclarativeNode _n = cloud.getNode(n);
-	// // Assert ID
-	// Assert.assertTrue(_n.getId() == n.getId());
-	// // Assert STATE
-	// Assert.assertEquals(cloud.getNode(n).getStatus(),
-	// NodeMetadataStatus.RUNNING);
-	// }
-
 	@Test
 	public void testGetImage() {
 		Image defaultImage = createDefaultImagesForTest(createDefaultLocationsForTest()).iterator().next();
 
 		Assert.assertTrue(cloud.getAllImages().contains(defaultImage));
 
-		SquanderGlobalOptions.INSTANCE.log_level = Level.TRACE;
+		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
+
 		Image image = cloud.getImage(defaultImage.getId());
+		System.out.println("DeclarativeCloudTest.testGetImage() " + defaultImage);
+		System.out.println("DeclarativeCloudTest.testGetImage() " + image);
 		// Assert ID
 		Assert.assertEquals(image.getId(), defaultImage.getId());
 	}
@@ -486,9 +477,10 @@ public class DeclarativeCloudTest {
 	public void testFailGetImage() {
 		try {
 			SquanderGlobalOptions.INSTANCE.log_level = Level.TRACE;
+			//
+			Image result = cloud.getImage("");
 
-			// Here W
-			cloud.getImage("");
+			System.out.println("DeclarativeCloudTest.testFailGetImage() WRONG IMAGE " + result);
 			// Assert ID
 			Assert.fail("precondition not raised");
 		} catch (Exception e) {
@@ -582,7 +574,7 @@ public class DeclarativeCloudTest {
 
 	}
 
-	@Test(dependsOnMethods = { "testCreateNode", "testGetNode" })
+	@Test(dependsOnMethods = { "testCreateNode", "testGetNodeByID" })
 	public void testSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
 		//
@@ -591,7 +583,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 	}
 
-	@Test(dependsOnMethods = { "testCreateNode", "testGetNode" })
+	@Test(dependsOnMethods = { "testCreateNode", "testGetNodeByID" })
 	public void testSuspendOnlyTheNode() {
 		// WARNING: This test depends on the correctness of getNode!
 
@@ -627,8 +619,7 @@ public class DeclarativeCloudTest {
 		System.out.println("DeclarativeCloudTest.testSuspendOnlyTheNode() " + cloud.getAllNodes());
 	}
 
-	// TODO Depends on cloud.getNode() !
-	@Test
+	@Test(dependsOnMethods = { "testCreateNode", "testGetNodeByID" })
 	public void testStartSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
 		// WARNING: This test depends on the correctness of suspend !
@@ -644,7 +635,7 @@ public class DeclarativeCloudTest {
 		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 	}
 
-	@Test(dependsOnMethods = { "testCreateNode", "testGetNode" })
+	@Test(dependsOnMethods = { "testCreateNode", "testGetNodeByID" })
 	public void testStartOnlyTheSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();

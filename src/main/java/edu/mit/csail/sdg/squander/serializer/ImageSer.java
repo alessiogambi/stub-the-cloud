@@ -90,8 +90,9 @@ public class ImageSer implements IObjSer {
 	// not sure why !
 	@Override
 	public Object concrFunc(Object obj, FieldValue fieldValue) {
-		Log.debug("ImageSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
-		Log.debug("ImageSer.concrFunc() fieldValue " + fieldValue);
+		System.err.println("ImageSer.concrFunc() object " + obj.getClass() + "@" + obj.hashCode());
+		System.err.println("ImageSer.concrFunc() fieldValue " + fieldValue);
+
 		String fldName = fieldValue.jfield().name();
 		// TODO Check that the object is really an Image ?
 		if (ID.equals(fldName)) {
@@ -118,7 +119,6 @@ public class ImageSer implements IObjSer {
 
 			ImageImpl image = (ImageImpl) concreteObj;
 			// Reset all the attributes
-			Log.debug("ImageSer.restoreID() Reset : " + value.size());
 			for (ObjTuple ot : value) {
 				image.setId((String) ot.get(1));
 			}

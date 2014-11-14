@@ -8,6 +8,7 @@ package org.jclouds.compute.declarativestub.core;
 // Squander.exe(this, new Class<?>[]{String.class, String.class}, new
 // Object[]{name, email});
 // }
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,12 +17,10 @@ import org.jclouds.compute.domain.Image;
 import org.jclouds.domain.Location;
 
 import edu.mit.csail.sdg.annotations.Ensures;
-import edu.mit.csail.sdg.annotations.Fresh;
 import edu.mit.csail.sdg.annotations.FreshObjects;
 import edu.mit.csail.sdg.annotations.Invariant;
 import edu.mit.csail.sdg.annotations.Modifies;
 import edu.mit.csail.sdg.annotations.Requires;
-import edu.mit.csail.sdg.annotations.Returns;
 import edu.mit.csail.sdg.annotations.SpecField;
 import edu.mit.csail.sdg.squander.Squander;
 
@@ -51,18 +50,19 @@ import edu.mit.csail.sdg.squander.Squander;
 // "locations : set org.jclouds.domain.Location"
 })
 @Invariant({/* All the Resources must have unique ID */
-		"all vmA : this.instances | all vmB : this.instances - vmA | vmA.id != vmB.id",
+"all vmA : this.instances | all vmB : this.instances - vmA | vmA.id != vmB.id",
 		"all imageA : this.images.elts | all imageB : this.images.elts - imageA | imageA.id != imageB.id",
-		"all hardwareA : this.hardwares.elts | all hardwareB : this.hardwares.elts - hardwareA | hardwareA.id != hardwareB.id",
-		"all locationA : this.locations.elts | all locationB : this.locations.elts - locationA | locationA.id != locationB.id",
+		// "all hardwareA : this.hardwares.elts | all hardwareB : this.hardwares.elts - hardwareA | hardwareA.id != hardwareB.id",
+		// "all locationA : this.locations.elts | all locationB : this.locations.elts - locationA | locationA.id != locationB.id",
 		/* Null is not an option for any Resource */
-		"no (null & this.instances)", "no (null & this.images.elts)", "no (null & this.hardwares.elts)",
-		"no (null & this.locations.elts)",
-		/* Relevant Fields ? */
-		"all H : this.hardwares.elts | H.location != null",
-		"all I : this.images.elts | I.id != null && I.location != null && I.status != null",
-		/* Use only the locations defined for the Cloud */
-		"this.images.elts.location in this.locations.elts", "this.hardwares.elts.location in this.locations.elts"
+		"no (null & this.instances)",
+// "no (null & this.images.elts)", "no (null & this.hardwares.elts)",
+// "no (null & this.locations.elts)",
+/* Relevant Fields ? */
+// "all H : this.hardwares.elts | H.location != null",
+// "all I : this.images.elts | I.id != null && I.location != null && I.status != null",
+/* Use only the locations defined for the Cloud */
+// "this.images.elts.location in this.locations.elts", "this.hardwares.elts.location in this.locations.elts"
 // /* EOF */
 })
 public class DeclarativeCloud {
@@ -166,11 +166,14 @@ public class DeclarativeCloud {
 		return this.images;
 	}
 
-	@Ensures("return.elts == this.instances")
-	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
-	@Modifies("return.elts")
+	// @Ensures("return.elts == this.instances")
+	// @FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
+	// @Modifies("return.elts")
+	// public Set<DeclarativeNode> getAllNodes() {
+	// return Squander.exe(this);
+	// }
 	public Set<DeclarativeNode> getAllNodes() {
-		return Squander.exe(this);
+		return new HashSet<DeclarativeNode>();
 	}
 
 	@FreshObjects(cls = Set.class, typeParams = { DeclarativeNode.class }, num = 1)
@@ -346,20 +349,10 @@ public class DeclarativeCloud {
 		return Squander.exe(this, _id);
 	}
 
-	// FIXME Why this results in NoSolution if Invariants are added at the preconditions ?!
-	@Requires("true")
-	@Ensures("true")
-	private void checkGetImagePreconditions(String _id) {
-		Squander.exe(this, _id);
-	}
-
-	// @Ensures({ "return == { I : one Image | I in this.images.elts && I.id == _id }", "@old(Image.id)==Image.id" })
+	@Requires({ "#( _id @& this.images.elts.id) > 0" })
+	@Ensures({ "return = { I : this.images.elts | I.id == return.id && I.id == _id}" })
 	public Image getImage(String _id) {
-		// TODO During precondition checking it does not check invariants !?
-		// return Squander.exe(this, _id);
-		checkGetImagePreconditions(_id);
-		//
-		return null;
+		return Squander.exe(this, _id);
 	}
 
 	@Requires({
