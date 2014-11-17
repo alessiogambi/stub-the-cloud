@@ -2,41 +2,52 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<parent>
+		<artifactId>jclouds-project</artifactId>
+		<groupId>org.apache.jclouds</groupId>
+		<version>1.8.0</version>
+		<relativePath>/Users/alessiogambi/git/jclouds/project/pom.xml</relativePath>
+	</parent>
 
-	<!-- <parent> <artifactId>jclouds-project</artifactId> <groupId>org.apache.jclouds</groupId> 
-		<version>1.8.0</version> <relativePath>../project/pom.xml</relativePath> 
-		</parent> <artifactId>jclouds-core</artifactId> <name>jclouds Components 
-		Core</name> <packaging>bundle</packaging> <description>Core components to 
-		access jclouds services</description> -->
+	<artifactId>declarative-jclouds</artifactId>
+	<name>Declarative jclouds Components </name>
+	<packaging>bundle</packaging>
+	<description>Declarative components that implement jclouds services</description>
 
-	<groupId>StubTheCloud</groupId>
-	<artifactId>StubTheCloud</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<!-- <groupId>StubTheCloud</groupId> <artifactId>StubTheCloud</artifactId> 
+		<version>0.0.1-SNAPSHOT</version> -->
 
 	<dependencies>
 		<!-- Abstract interface -->
 		<dependency>
-			<groupId>org.apache.jclouds</groupId>
-			<artifactId>jclouds-compute</artifactId>
-			<version>1.8.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.jclouds</groupId>
-			<artifactId>jclouds-compute</artifactId>
-			<classifier>tests</classifier>
-			<version>1.8.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.jclouds</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jclouds-core</artifactId>
-			<version>1.8.0</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.jclouds</groupId>
+			<groupId>${project.groupId}</groupId>
 			<artifactId>jclouds-core</artifactId>
-			<version>1.8.0</version>
-			<classifier>tests</classifier>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jclouds-compute</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>jclouds-compute</artifactId>
+			<version>${project.version}</version>
+			<classifier>tests</classifier>
+			<type>test-jar</type>
+		</dependency>
+		<!-- <dependency> <groupId>org.apache.jclouds</groupId> <artifactId>jclouds-core</artifactId> 
+			<version>1.8.0</version> </dependency> <dependency> <groupId>org.apache.jclouds</groupId> 
+			<artifactId>jclouds-core</artifactId> <version>1.8.0</version> <classifier>tests</classifier> 
+			</dependency> -->
 		<!-- Logging Facilities -->
 		<dependency>
 			<groupId>org.apache.jclouds.driver</groupId>
@@ -50,9 +61,14 @@
 		</dependency>
 
 		<!-- Add SQUANDER local dependencies -->
-	<!-- <dependency> <artifactId>mit.squander</artifactId> <groupId>squander</groupId> 
-		<scope>system</scope> <version>2.0</version> <systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath> 
-		</dependency> -->
+		<dependency>
+			<artifactId>mit.squander</artifactId>
+			<groupId>squander</groupId>
+			<scope>system</scope>
+			<version>2.0</version>
+			<!-- <systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath> -->
+			<systemPath>${basedir}/lib/squander.jar</systemPath>
+		</dependency>
 
 		<dependency>
 			<artifactId>mit.squander</artifactId>
@@ -61,10 +77,6 @@
 			<version>1.0</version>
 			<systemPath>${basedir}/lib/forge.jar</systemPath>
 		</dependency>
-
-		<!-- <dependency> <artifactId>mit.squander</artifactId> <groupId>jforge-annotations</groupId> 
-			<scope>system</scope> <version>1.0</version> <systemPath>${basedir}/lib/jforge-annotations.jar</systemPath> 
-			</dependency> -->
 
 		<dependency>
 			<artifactId>mit.squander</artifactId>
@@ -126,10 +138,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		<!-- <dependency> <artifactId>mit.squander</artifactId> <groupId>junit</groupId> 
-			<scope>system</scope> <version>4.7</version> <systemPath>${basedir}/lib/junit-4.7.jar</systemPath> 
-			</dependency> -->
-
 		<dependency>
 			<groupId>org.easymock</groupId>
 			<artifactId>easymockclassextension</artifactId>
@@ -137,26 +145,21 @@
 		</dependency>
 	</dependencies>
 
-
 	<build>
-		<sourceDirectory>lib/x86-mac</sourceDirectory>
-		<resources>
-			<resource>
-				<directory>lib/x86-mac</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</resource>
-		</resources>
 		<plugins>
 			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.16</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<parallel>classes</parallel>
+					<threadCount>1</threadCount>
 				</configuration>
 			</plugin>
 		</plugins>
+		<!-- <sourceDirectory>lib/x86-mac</sourceDirectory> <resources> <resource> 
+			<directory>lib/x86-mac</directory> </resource> </resources> <plugins> <plugin> 
+			<artifactId>maven-compiler-plugin</artifactId> <version>3.1</version> <configuration> 
+			<source>1.6</source> <target>1.6</target> </configuration> </plugin> </plugins> -->
 	</build>
 </project>
