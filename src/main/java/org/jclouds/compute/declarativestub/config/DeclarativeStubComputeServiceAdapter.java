@@ -21,14 +21,12 @@ import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
-import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 
 import com.google.common.base.Predicate;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -37,6 +35,14 @@ import com.google.common.collect.ImmutableSet;
  * 
  * A multi-user implementation can be easily obtained by injecting a nodes-to-id object like in
  * {@StubComputeServiceAdapter}
+ * 
+ * Note that the cloud must be a read-only objects for getter methods, the STUB itself represents the CLIENT side of the
+ * cloud
+ * 
+ * In this implementation the cloud is modeled in a pure-abstract way and the Adapter mainly manages the Immutability of
+ * the clouds on read and the actual object types. In the next versions we'll try to reason/model/specify directly in
+ * terms of the actual objects that we want to mock.
+ * 
  * 
  * @author alessiogambi
  *
@@ -48,7 +54,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	// Possibly this implementation should be injected in the constructor !
 	private final DeclarativeCloud cloud;
 
-	// Cached nodes
+	// Cached nodes Those keep the connection (through the ID) between abstract elements and concrete implementations.
 	// private final Map<String, NodeMetadata> cachedNodes;
 	// Keep the actual "real" instances
 	private final Set<Image> images;
@@ -91,6 +97,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 		return toNodeMetadata(cloud.getNode(id));
 	}
 
+	// Concretization function from AbstractNode and concrete NodeMetadata
 	private NodeMetadata toNodeMetadata(final DeclarativeNode node) {
 
 		if (node == null) {

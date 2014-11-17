@@ -21,8 +21,7 @@ import org.jclouds.compute.internal.BaseComputeServiceApiMetadataTest;
 import org.testng.annotations.Test;
 
 @Test(groups = "unit", testName = "DeclarativeStubApiMetadataTest")
-public class DeclarativeStubApiMetadataTest extends
-		BaseComputeServiceApiMetadataTest {
+public class DeclarativeStubApiMetadataTest extends BaseComputeServiceApiMetadataTest {
 
 	public DeclarativeStubApiMetadataTest() {
 		super(new DeclarativeStubApiMetadata());

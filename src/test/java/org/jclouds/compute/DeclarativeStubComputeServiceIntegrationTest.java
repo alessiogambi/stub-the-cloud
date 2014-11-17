@@ -39,7 +39,6 @@ import org.easymock.IArgumentMatcher;
 import org.jclouds.compute.config.AdminAccessConfiguration;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeMetadataStatus;
 import org.jclouds.compute.internal.BaseComputeServiceLiveTest;
 import org.jclouds.compute.util.OpenSocketFinder;
 import org.jclouds.crypto.Pems;

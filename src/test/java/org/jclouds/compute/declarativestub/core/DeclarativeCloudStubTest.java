@@ -21,6 +21,7 @@ import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationBuilder;
 import org.jclouds.domain.LocationScope;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -43,12 +44,14 @@ import edu.mit.csail.sdg.squander.options.SquanderGlobalOptions;
 public class DeclarativeCloudStubTest {
 
 	/*
-	 * SUT
+	 * SUT. The ID generation fails if multiple tests are run concurrently ?!
 	 */
 	DeclarativeCloud cloud;
 
-	@BeforeMethod
+	@BeforeMethod(alwaysRun = true)
 	public void initializeCloud() {
+
+		System.err.println(" WAIT ME !");
 
 		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
 
@@ -62,6 +65,12 @@ public class DeclarativeCloudStubTest {
 				defaultDeclarativeLocations
 		//
 		);
+
+	}
+
+	@AfterMethod
+	public void resetTheCloud() {
+
 	}
 
 	@Test
@@ -281,7 +290,7 @@ public class DeclarativeCloudStubTest {
 		Assert.assertEquals(n.getHardware().getLocation(), n.getLocation());
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testCreateAndListNode() {
 		DeclarativeNode newNode = cloud.createNode();
 		// FIXME Exec - This must return a copy of the cloud, not the cloud itself, meaning that all its nodes must be
@@ -294,7 +303,7 @@ public class DeclarativeCloudStubTest {
 
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testCreateNodes() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();
@@ -305,7 +314,7 @@ public class DeclarativeCloudStubTest {
 		Assert.assertEquals(n1.getHardware().getLocation(), n.getLocation());
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testRemoveNodeByID() {
 		DeclarativeNode n = cloud.createNode();
 		cloud.removeNode(n.getId());
@@ -364,7 +373,7 @@ public class DeclarativeCloudStubTest {
 	// // Assert.assertTrue(c.getNode(n2.id).id == n2.id);
 	// }
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testRemoveNodesByID() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();
@@ -419,6 +428,8 @@ public class DeclarativeCloudStubTest {
 
 		DeclarativeHardware declarativeHardware1 = cloud.getHardware(hardwareId);
 		DeclarativeHardware declarativeHardware2 = cloud.getHardware(hardwareId);
+		System.out.println("DeclarativeCloudStubTest.testGetHardware() " + declarativeHardware1);
+		System.out.println("DeclarativeCloudStubTest.testGetHardware() " + declarativeHardware2);
 		//
 		Assert.assertEquals(declarativeHardware1, declarativeHardware2, "Not the same hardware object !");
 		//
@@ -456,7 +467,7 @@ public class DeclarativeCloudStubTest {
 		}
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testGetNodeByIDReturnNull() {
 		// EXEC
 		DeclarativeNode _n = cloud.getNode("");
@@ -464,7 +475,7 @@ public class DeclarativeCloudStubTest {
 		Assert.assertNull(_n);
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testGetNodeByID() {
 		DeclarativeNode n = cloud.createNode();
 		// EXEC
@@ -489,7 +500,7 @@ public class DeclarativeCloudStubTest {
 	// return false;
 	// }
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testGetNodesBySetID() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();
@@ -512,7 +523,7 @@ public class DeclarativeCloudStubTest {
 		// Assert.assertTrue(hasStatus(nodes, n2, NodeMetadataStatus.RUNNING));
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testGetNodeBySetID() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();
@@ -532,7 +543,7 @@ public class DeclarativeCloudStubTest {
 
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
 		//
@@ -541,7 +552,7 @@ public class DeclarativeCloudStubTest {
 		Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.SUSPENDED);
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testSuspendOnlyTheNode() {
 		// WARNING: This test depends on the correctness of getNode!
 
@@ -577,7 +588,7 @@ public class DeclarativeCloudStubTest {
 		System.out.println("DeclarativeCloudTest.testSuspendOnlyTheNode() " + cloud.getAllNodes());
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testStartSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
 		// WARNING: This test depends on the correctness of suspend !
@@ -593,7 +604,7 @@ public class DeclarativeCloudStubTest {
 		// Assert.assertEquals(cloud.getNode(n.getId()).getStatus(), NodeMetadataStatus.RUNNING);
 	}
 
-	@Test(dependsOnMethods = "testCreateRandomNode")
+	@Test
 	public void testStartOnlyTheSuspendNode() {
 		DeclarativeNode n = cloud.createNode();
 		DeclarativeNode n1 = cloud.createNode();

@@ -2,3 +2,5 @@
 
 Define the specifications of the cloud in term of ONLY pure atoms and classes, that is, do not use the actual implementations from jclouds for it.
 Afterwards will try to make abstraction-concretization functions or some other mapping
+
+To show case the specifications we implements a declarative jclouds provider

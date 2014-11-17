@@ -9,10 +9,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import org.jclouds.compute.config.BaseComputeServiceContextModule;
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
 import org.jclouds.compute.declarativestub.core.DeclarativeNode;
@@ -46,8 +42,11 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Named;
 
 /**
  * This module should contains the declarative logic that implements the specification of the cloud and that can be
@@ -309,7 +308,7 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 
 	@Singleton
 	public static class StubSocketOpen implements SocketOpen {
-		// private final ConcurrentMap<String, NodeMetadata> nodes;
+		// private final ConcurrentMap<String, Node Metadata> nodes;
 		private final String publicIpPrefix;
 		private final DeclarativeCloud cloud;
 

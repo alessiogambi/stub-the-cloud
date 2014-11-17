@@ -20,8 +20,6 @@ import java.io.IOException;
 import java.util.Set;
 
 import org.jclouds.compute.internal.BaseTemplateBuilderLiveTest;
-import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableSet;
