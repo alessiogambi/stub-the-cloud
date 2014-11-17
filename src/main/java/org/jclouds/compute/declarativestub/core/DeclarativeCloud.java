@@ -51,22 +51,22 @@ import edu.mit.csail.sdg.annotations.SpecField;
 })
 public interface DeclarativeCloud {
 
-	/*
-	 * Since it is not possible to create random strings we use a generative naive approach. The test assume that this
-	 * atomic integer will be reset everytime we create an instance of cloud
-	 */
-	public static class FactoryId {
-		final static private AtomicInteger currentId = new AtomicInteger(0);
-
-		public static String allocateID() {
-			return "" + currentId.incrementAndGet();
-		}
-
-		// Only for Testing
-		public static void resetID() {
-			currentId.set(0);
-		}
-	}
+	// /*
+	// * Since it is not possible to create random strings we use a generative naive approach. The test assume that this
+	// * atomic integer will be reset everytime we create an instance of cloud
+	// */
+	// public static class FactoryId {
+	// final static private AtomicInteger currentId = new AtomicInteger(0);
+	//
+	// public abstract static String allocateID() {
+	// return "" + currentId.incrementAndGet();
+	// }
+	//
+	// // Only for Testing
+	// // public static void resetID() {
+	// // currentId.set(0);
+	// // }
+	// }
 
 	public DeclarativeNode createNode();
 

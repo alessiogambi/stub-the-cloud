@@ -3,8 +3,8 @@ package org.jclouds.compute.declarativestub.core;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.UUID;
 
-import org.jclouds.compute.declarativestub.core.DeclarativeCloud.FactoryId;
 import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
@@ -50,8 +50,6 @@ public class DeclarativeCloudStubTest {
 
 	@BeforeMethod(alwaysRun = true)
 	public void initializeCloud() {
-
-		System.err.println(" WAIT ME !");
 
 		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
 
@@ -233,7 +231,7 @@ public class DeclarativeCloudStubTest {
 	@Test
 	public void testCreateNodeWithParameters() {
 		// Prepare the inputs
-		String newNodeID = FactoryId.allocateID();
+		String newNodeID = UUID.randomUUID().toString();
 		String _name = "test";
 		String _group = "test";
 		DeclarativeLocation _location = cloud.getAllLocations().iterator().next();
@@ -249,8 +247,8 @@ public class DeclarativeCloudStubTest {
 	@Test
 	public void testCreateNodesWithParameters() {
 		// Prepare the inputs
-		String newNodeID_1 = FactoryId.allocateID();
-		String newNodeID_2 = FactoryId.allocateID();
+		String newNodeID_1 = UUID.randomUUID().toString();
+		String newNodeID_2 = UUID.randomUUID().toString();
 		String _name = "test";
 		String _group = "test";
 		DeclarativeLocation _location = cloud.getAllLocations().iterator().next();

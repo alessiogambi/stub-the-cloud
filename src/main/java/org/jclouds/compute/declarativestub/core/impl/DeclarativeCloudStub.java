@@ -2,6 +2,7 @@ package org.jclouds.compute.declarativestub.core.impl;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
 import org.jclouds.compute.declarativestub.core.DeclarativeHardware;
@@ -29,7 +30,17 @@ public class DeclarativeCloudStub implements DeclarativeCloud {
 
 	// Not sure this pattern is ok !
 	public DeclarativeNode createNode() {
-		return createNode(FactoryId.allocateID());
+		return createNode(allocateID());
+	}
+
+	/*
+	 * Since it is not possible to create random strings we use a generative naive approach. The test assume that this
+	 * atomic integer will be reset everytime we create an instance of cloud
+	 */
+	final private AtomicInteger currentId = new AtomicInteger(0);
+
+	public String allocateID() {
+		return "" + currentId.incrementAndGet();
 	}
 
 	public DeclarativeCloudStub(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {

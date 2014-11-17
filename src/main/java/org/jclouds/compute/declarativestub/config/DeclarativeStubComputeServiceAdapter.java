@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -179,7 +180,7 @@ public class DeclarativeStubComputeServiceAdapter implements JCloudsNativeComput
 	public NodeWithInitialCredentials createNodeWithGroupEncodedIntoName(String group, String name, Template template) {
 		// Prepare the data !
 		// Allocate a new ID
-		String nodeId = DeclarativeCloud.FactoryId.allocateID();
+		String nodeId = UUID.randomUUID().toString();// DeclarativeCloud.FactoryId.allocateID();
 
 		DeclarativeLocation location = cloud.getLocation(template.getLocation().getId());
 		DeclarativeImage image = cloud.getImage(template.getImage().getId());
