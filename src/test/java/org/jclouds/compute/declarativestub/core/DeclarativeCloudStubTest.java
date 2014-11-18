@@ -51,6 +51,8 @@ public class DeclarativeCloudStubTest {
 	@BeforeMethod(alwaysRun = true)
 	public void initializeCloud() {
 
+		System.out.println("DeclarativeCloudStubTest.initializeCloud() " + System.getProperties());
+
 		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
 
 		Set<Location> defaultDeclarativeLocations = createDefaultDeclarativeLocationsForTest();

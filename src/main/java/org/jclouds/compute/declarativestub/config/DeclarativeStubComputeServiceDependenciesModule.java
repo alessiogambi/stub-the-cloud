@@ -1,52 +1,23 @@
 package org.jclouds.compute.declarativestub.config;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.io.IOException;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jclouds.compute.config.BaseComputeServiceContextModule;
 import org.jclouds.compute.declarativestub.core.DeclarativeCloud;
 import org.jclouds.compute.declarativestub.core.DeclarativeNode;
 import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
 import org.jclouds.compute.domain.Hardware;
-import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
-import org.jclouds.compute.domain.ImageStatus;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.OperatingSystem;
-import org.jclouds.compute.domain.OsFamily;
-import org.jclouds.compute.domain.Processor;
-import org.jclouds.compute.domain.SecurityGroup;
-import org.jclouds.compute.domain.Volume;
-import org.jclouds.compute.domain.internal.VolumeImpl;
-import org.jclouds.compute.extensions.SecurityGroupExtension;
-import org.jclouds.compute.stub.extensions.StubSecurityGroupExtension;
-import org.jclouds.domain.Credentials;
 import org.jclouds.domain.Location;
-import org.jclouds.location.Provider;
 import org.jclouds.predicates.SocketOpen;
 
-import com.google.common.base.Supplier;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
+import com.google.inject.util.Modules;
 
 /**
  * This module should contains the declarative logic that implements the specification of the cloud and that can be
@@ -59,101 +30,26 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 
 	@Override
 	protected void configure() {
-		bind(new TypeLiteral<SecurityGroupExtension>() {
-		}).to(StubSecurityGroupExtension.class);
-
+		// FIXME Not sure this is needed:
+		// bind(new TypeLiteral<SecurityGroupExtension>() {
+		// }).to(StubSecurityGroupExtension.class);
+		// Install a private module
 	}
 
-	// STUB STUFF STATIC SO MULTIPLE CONTEXTS CAN SEE IT
-	protected static final LoadingCache<String, ConcurrentMap<String, NodeMetadata>> backing = CacheBuilder
-			.newBuilder().build(new CacheLoader<String, ConcurrentMap<String, NodeMetadata>>() {
-
-				@Override
-				public ConcurrentMap<String, NodeMetadata> load(String arg0) throws Exception {
-					return new ConcurrentHashMap<String, NodeMetadata>();
-				}
-
-			});
-
-	@Provides
-	@Singleton
-	private Set<Location> providesLocations(Supplier<Location> location) {
-		// Empty location is fine ?!
-		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
-		// Add the one provided via injection
-		locations.add(location.get());
-		return locations.build();
-	}
-
-	/**
-	 * Provided via TODO Check me {@link BaseComputeServiceContextModule#provideOsVersionMap}
-	 */
+	// // STUB STUFF STATIC SO MULTIPLE CONTEXTS CAN SEE IT
+	// protected static final LoadingCache<String, ConcurrentMap<String, NodeMetadata>> backing = CacheBuilder
+	// .newBuilder().build(new CacheLoader<String, ConcurrentMap<String, NodeMetadata>>() {
 	//
+	// @Override
+	// public ConcurrentMap<String, NodeMetadata> load(String arg0) throws Exception {
+	// return new ConcurrentHashMap<String, NodeMetadata>();
+	// }
+	//
+	// });
 
-	@Provides
-	@Singleton
-	protected Set<Image> providesImages(Set<Location> locations, Map<OsFamily, Map<String, String>> osToVersionMap) {
-		Location location = locations.iterator().next();
-		ImmutableSet.Builder<Image> images = ImmutableSet.<Image> builder();
-		int id = 1;
-
-		// Let's work only with few images first !
-		int MAX_Count = 2;
-
-		for (boolean is64Bit : new boolean[] { true, false }) {
-			for (Entry<OsFamily, Map<String, String>> osVersions : osToVersionMap.entrySet()) {
-
-				for (String version : ImmutableSet.copyOf(osVersions.getValue().values())) {
-
-					String desc = String.format("declarative-stub %s %s", osVersions.getKey(), is64Bit);
-
-					// THIS SHOULD BE CREATED USING THE SPEC OF THE CLOUD AND A
-					// SMART
-					// PRECONDITION
-					Image image = new ImageBuilder()
-							.ids(id++ + "")
-							.name(osVersions.getKey().name())
-							.location(location)
-							.operatingSystem(
-									new OperatingSystem(osVersions.getKey(), desc, version, null, desc, is64Bit))
-							.description(desc).status(ImageStatus.AVAILABLE).build();
-
-					images.add(image);
-
-				}
-			}
-		}
-		// Now Take only the first MAX_Count
-		ImmutableSet.Builder<Image> filteredImages = ImmutableSet.<Image> builder();
-		int c = 0;
-		Iterator<Image> i = images.build().iterator();
-		while (c < MAX_Count && i.hasNext()) {
-			filteredImages.add(i.next());
-		}
-		return filteredImages.build();
-	}
-
-	@Provides
-	protected Set<Hardware> providesHardwares(Set<Location> locations) {
-		// This is similar to listImage
-		Location location = locations.iterator().next();
-		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
-
-		flavors.add(new HardwareBuilder().ids("1").name("small").location(location)
-				.processors(ImmutableList.of(new Processor(1, 1.0))).ram(1740)
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 160, true, false))).build());
-
-		flavors.add(new HardwareBuilder().ids("2").name("medium").location(location)
-				.processors(ImmutableList.of(new Processor(4, 1.0))).ram(7680)
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 850, true, false))).build());
-
-		flavors.add(new HardwareBuilder().ids("3").name("large").location(location)
-				.processors(ImmutableList.of(new Processor(8, 1.0))).ram(15360)
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 1690, true, false))).build());
-
-		return flavors.build();
-	}
-
+	// FIXME Not sure this is the right implementation !
+	// And I am pretty sure that this is way parallel tests fail: there is always 1 and 1 cloud, that is shared but that
+	// it is not designed to be thread safe ! !
 	protected static DeclarativeCloud detachedCloud;
 
 	@Singleton
@@ -163,121 +59,122 @@ public class DeclarativeStubComputeServiceDependenciesModule extends AbstractMod
 		System.out.println("DeclarativeStubComputeServiceDependenciesModule.providesCloud()");
 		if (detachedCloud == null) {
 			System.out
-					.println("DeclarativeStubComputeServiceDependenciesModule.providesDetachedCloud() CREATING DETACHED CLOUD");
+					.println("DeclarativeStubComputeServiceDependenciesModule.providesDetachedCloud() CREATING - DETACHED CLOUD");
 			detachedCloud = new DeclarativeCloudStub(images, hardwares, locations);
 		}
 		return detachedCloud;
 	}
 
+	@Provides
+	@Singleton
+	@Named("TEST_CLOUD")
+	protected DeclarativeCloud providesTestCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
+		try {
+			System.out
+					.println("\n\n\nDeclarativeStubComputeServiceAdapter.DeclarativeStubComputeServiceAdapter()\n\n\n");
+			System.out.println("location " + locations);
+			System.out.println("hardwares " + hardwares);
+			System.out.println("images " + images);
+			System.out.println("===================================");
+			// Note this !
+			DeclarativeCloud cloud = new DeclarativeCloudStub(images, hardwares, locations);
+			System.out.println("\n\n\n cloud == " + cloud + "\n\n\n");
+			return cloud;
+		} catch (Throwable e) {
+			e.printStackTrace();
+			System.out.println("DeclarativeStubComputeServiceDependenciesModule.providesCloud() WAIT USER INPUT: ");
+			try {
+				System.in.read();
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			throw new RuntimeException(e);
+		}
+	}
+
 	// @Provides
 	// @Singleton
-	// protected DeclarativeCloud providesCloud(Set<Image> images, Set<Hardware> hardwares, Set<Location> locations) {
-	// try {
-	// System.out
-	// .println("\n\n\nDeclarativeStubComputeServiceAdapter.DeclarativeStubComputeServiceAdapter()\n\n\n");
-	// System.out.println("location " + locations);
-	// System.out.println("hardwares " + hardwares);
-	// System.out.println("images " + images);
-	// System.out.println("===================================");
-	// // Note this !
-	// DeclarativeCloud cloud = new DeclarativeCloudStub(images, hardwares, locations);
-	// System.out.println("\n\n\n cloud == " + cloud + "\n\n\n");
-	// return cloud;
-	// } catch (Throwable e) {
-	// e.printStackTrace();
-	// System.out.println("DeclarativeStubComputeServiceDependenciesModule.providesCloud() WAIT USER INPUT: ");
-	// try {
-	// System.in.read();
-	// } catch (IOException e1) {
-	// // TODO Auto-generated catch block
-	// e1.printStackTrace();
-	// }
-	// throw new RuntimeException(e);
-	// }
+	// /**
+	// * This provides the nodes element to {@link DeclarativeStubComputeServiceAdapter}
+	// */
+	// protected ConcurrentMap<String, NodeMetadata> provideNodesForIdentity(
+	// /**
+	// * This is provided by who ? jclouds itself ?
+	// */
+	// @Provider Supplier<Credentials> creds// @Provider => Rest Service ?
+	// ) throws ExecutionException {
+	// return backing.get(creds.get().identity);
 	// }
 
-	@Provides
-	@Singleton
-	/**
-	 * This provides the nodes element to {@link DeclarativeStubComputeServiceAdapter}
-	 */
-	protected ConcurrentMap<String, NodeMetadata> provideNodesForIdentity(
-	/**
-	 * This is provided by who ? jclouds itself ?
-	 */
-	@Provider Supplier<Credentials> creds// @Provider => Rest Service ?
-	) throws ExecutionException {
-		return backing.get(creds.get().identity);
-	}
+	// protected static final LoadingCache<String, ConcurrentMap<String, SecurityGroup>> groupBacking = CacheBuilder
+	// .newBuilder().build(new CacheLoader<String, ConcurrentMap<String, SecurityGroup>>() {
+	//
+	// @Override
+	// public ConcurrentMap<String, SecurityGroup> load(String arg0) throws Exception {
+	// return new ConcurrentHashMap<String, SecurityGroup>();
+	// }
+	//
+	// });
+	//
+	// @Provides
+	// @Singleton
+	// protected ConcurrentMap<String, SecurityGroup> provideGroups(
+	// /**
+	// * This is provided by who ? jclouds itself ?
+	// */
+	// @Provider Supplier<Credentials> creds) throws ExecutionException {
+	// return groupBacking.get(creds.get().identity);
+	// }
 
-	protected static final LoadingCache<String, ConcurrentMap<String, SecurityGroup>> groupBacking = CacheBuilder
-			.newBuilder().build(new CacheLoader<String, ConcurrentMap<String, SecurityGroup>>() {
+	// protected static final LoadingCache<String, Multimap<String, SecurityGroup>> groupsForNodeBacking = CacheBuilder
+	// .newBuilder().build(new CacheLoader<String, Multimap<String, SecurityGroup>>() {
+	//
+	// @Override
+	// public Multimap<String, SecurityGroup> load(String arg0) throws Exception {
+	// return LinkedHashMultimap.create();
+	// }
+	//
+	// });
+	//
+	// @Provides
+	// @Singleton
+	// protected Multimap<String, SecurityGroup> provideGroupsForNode(@Provider Supplier<Credentials> creds)
+	// throws ExecutionException {
+	// return groupsForNodeBacking.get(creds.get().identity);
+	// }
 
-				@Override
-				public ConcurrentMap<String, SecurityGroup> load(String arg0) throws Exception {
-					return new ConcurrentHashMap<String, SecurityGroup>();
-				}
+	// protected static final LoadingCache<String, AtomicInteger> nodeIds = CacheBuilder.newBuilder().build(
+	// new CacheLoader<String, AtomicInteger>() {
+	//
+	// @Override
+	// public AtomicInteger load(String arg0) throws Exception {
+	// return new AtomicInteger(0);
+	// }
+	//
+	// });
+	//
+	// @Provides
+	// @Named("NODE_ID")
+	// protected Integer provideNodeIdForIdentity(@Provider Supplier<Credentials> creds) throws ExecutionException {
+	// return nodeIds.get(creds.get().identity).incrementAndGet();
+	// }
 
-			});
-
-	@Provides
-	@Singleton
-	protected ConcurrentMap<String, SecurityGroup> provideGroups(
-	/**
-	 * This is provided by who ? jclouds itself ?
-	 */
-	@Provider Supplier<Credentials> creds) throws ExecutionException {
-		return groupBacking.get(creds.get().identity);
-	}
-
-	protected static final LoadingCache<String, Multimap<String, SecurityGroup>> groupsForNodeBacking = CacheBuilder
-			.newBuilder().build(new CacheLoader<String, Multimap<String, SecurityGroup>>() {
-
-				@Override
-				public Multimap<String, SecurityGroup> load(String arg0) throws Exception {
-					return LinkedHashMultimap.create();
-				}
-
-			});
-
-	@Provides
-	@Singleton
-	protected Multimap<String, SecurityGroup> provideGroupsForNode(@Provider Supplier<Credentials> creds)
-			throws ExecutionException {
-		return groupsForNodeBacking.get(creds.get().identity);
-	}
-
-	protected static final LoadingCache<String, AtomicInteger> nodeIds = CacheBuilder.newBuilder().build(
-			new CacheLoader<String, AtomicInteger>() {
-
-				@Override
-				public AtomicInteger load(String arg0) throws Exception {
-					return new AtomicInteger(0);
-				}
-
-			});
-
-	@Provides
-	@Named("NODE_ID")
-	protected Integer provideNodeIdForIdentity(@Provider Supplier<Credentials> creds) throws ExecutionException {
-		return nodeIds.get(creds.get().identity).incrementAndGet();
-	}
-
-	protected static final LoadingCache<String, AtomicInteger> groupIds = CacheBuilder.newBuilder().build(
-			new CacheLoader<String, AtomicInteger>() {
-
-				@Override
-				public AtomicInteger load(String arg0) throws Exception {
-					return new AtomicInteger(0);
-				}
-
-			});
-
-	@Provides
-	@Named("GROUP_ID")
-	protected Integer provideGroupIdForIdentity(@Provider Supplier<Credentials> creds) throws ExecutionException {
-		return groupIds.get(creds.get().identity).incrementAndGet();
-	}
+	// protected static final LoadingCache<String, AtomicInteger> groupIds = CacheBuilder.newBuilder().build(
+	// new CacheLoader<String, AtomicInteger>() {
+	//
+	// @Override
+	// public AtomicInteger load(String arg0) throws Exception {
+	// return new AtomicInteger(0);
+	// }
+	//
+	// });
+	//
+	// @Provides
+	// @Named("GROUP_ID")
+	// protected Integer provideGroupIdForIdentity(@Provider Supplier<Credentials> creds) throws ExecutionException {
+	// return groupIds.get(creds.get().identity).incrementAndGet();
+	// }
 
 	@Singleton
 	@Provides

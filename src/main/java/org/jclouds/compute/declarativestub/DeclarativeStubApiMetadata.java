@@ -6,6 +6,10 @@ import org.jclouds.apis.ApiMetadata;
 import org.jclouds.apis.internal.BaseApiMetadata;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.declarativestub.config.DeclarativeStubComputeServiceContextModule;
+import org.jclouds.compute.declarativestub.config.DeclarativeStubComputeServiceDefaultSetupModule;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 
 /**
  * Implementation of {@link ApiMetadata} for jclouds in-memory (Stub) API
@@ -33,11 +37,19 @@ public class DeclarativeStubApiMetadata extends BaseApiMetadata {
 	public static class Builder extends BaseApiMetadata.Builder<Builder> {
 
 		protected Builder() {
-			id("declarative-stub").name("declarative in-memory (Stub) API").identityName("Unused")
-					.defaultIdentity("declarative-stub").defaultCredential("declarative-stub")
+			id("declarative-stub")
+					.name("declarative in-memory (Stub) API")
+					.identityName("Unused")
+					.defaultIdentity("declarative-stub")
+					.defaultCredential("declarative-stub")
 					.defaultEndpoint("local-memory")
 					.documentation(URI.create("http://www.infosys.tuwien.ac.at/staff/agambi/blog/"))
-					.view(ComputeServiceContext.class).defaultModule(DeclarativeStubComputeServiceContextModule.class);
+					.view(ComputeServiceContext.class)
+					.defaultModules(
+							ImmutableSet.<Class<? extends Module>> builder()
+									.add(DeclarativeStubComputeServiceContextModule.class)
+									// .add(DeclarativeStubComputeServiceDefaultSetupModule.class)
+									.build());
 
 		}
 

@@ -1,7 +1,6 @@
 package org.jclouds.compute.declarativestub.core;
 
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.mit.csail.sdg.annotations.Ensures;
 import edu.mit.csail.sdg.annotations.FreshObjects;

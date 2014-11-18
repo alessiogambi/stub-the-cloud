@@ -9,36 +9,52 @@
 		<relativePath>/Users/alessiogambi/git/jclouds/project/pom.xml</relativePath>
 	</parent>
 
+	<groupId>org.apache.jclouds.provider</groupId>
 	<artifactId>declarative-jclouds</artifactId>
 	<name>Declarative jclouds Components </name>
-	<packaging>bundle</packaging>
 	<description>Declarative components that implement jclouds services</description>
+	<!-- <packaging>bundle</packaging> -->
+	<packaging>jar</packaging>
 
-	<!-- <groupId>StubTheCloud</groupId> <artifactId>StubTheCloud</artifactId> 
-		<version>0.0.1-SNAPSHOT</version> -->
+	<properties>
+		<test.declarative-stub.identity>FIXME_IDENTITY</test.declarative-stub.identity>
+		<test.declarative-stub.credential>FIXME_CREDENTIAL</test.declarative-stub.credential>
+		<test.declarative-stub.endpoint>https://.us-east-1.amazondeclarative-stub.com</test.declarative-stub.endpoint>
+		<test.declarative-stub.api-version>2012-06-01</test.declarative-stub.api-version>
+		<test.declarative-stub.build-version />
+
+		<test.declarative-stub.template />
+		<!-- Active EBS template as of 9/25/2013 -->
+		<test.declarative-stub.ebs-template>hardwareId=m1.small,imageId=us-east-1/ami-53b1ff3a</test.declarative-stub.ebs-template>
+		<!-- Windows_Server-2008-R2 with WinRM enabled (setup instructions at http://www.frontiertown.co.uk/2011/12/overthere-control-windows-from-java/) -->
+		<test.declarative-stub.windows-template>hardwareId=m1.small,imageId=us-east-1/ami-0cb76d65</test.declarative-stub.windows-template>
+		<!-- <jclouds.osgi.export>org.jclouds.declarative-stub.*;version="${project.version}"</jclouds.osgi.export> 
+			<jclouds.osgi.import> org.jclouds.compute.internal;version="${project.version}", 
+			org.jclouds.rest.internal;version="${project.version}", org.jclouds.declarative-stub;version="${project.version}", 
+			org.jclouds.declarative-stub*;version="${project.version}", org.jclouds*;version="${project.version}", 
+			* </jclouds.osgi.import> -->
+	</properties>
 
 	<dependencies>
-		<!-- Abstract interface -->
 		<dependency>
-			<groupId>${project.groupId}</groupId>
+			<groupId>org.apache.jclouds</groupId>
 			<artifactId>jclouds-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>${project.groupId}</groupId>
+			<groupId>org.apache.jclouds</groupId>
 			<artifactId>jclouds-core</artifactId>
 			<version>${project.version}</version>
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
-			<groupId>${project.groupId}</groupId>
+			<groupId>org.apache.jclouds</groupId>
 			<artifactId>jclouds-compute</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>${project.groupId}</groupId>
+			<groupId>org.apache.jclouds</groupId>
 			<artifactId>jclouds-compute</artifactId>
 			<version>${project.version}</version>
 			<classifier>tests</classifier>
@@ -60,71 +76,12 @@
 			<version>1.0.13</version>
 		</dependency>
 
-		<!-- Add SQUANDER local dependencies -->
 		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>squander</groupId>
-			<scope>system</scope>
+			<groupId>mit.squander</groupId>
+			<artifactId>squander</artifactId>
 			<version>2.0</version>
-			<!-- <systemPath>${basedir}/lib/squander-oct-30-14.jar</systemPath> -->
-			<systemPath>${basedir}/lib/squander.jar</systemPath>
 		</dependency>
 
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>forge</groupId>
-			<scope>system</scope>
-			<version>1.0</version>
-			<systemPath>${basedir}/lib/forge.jar</systemPath>
-		</dependency>
-
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>jfsl-annotations</groupId>
-			<scope>system</scope>
-			<version>1.0</version>
-			<systemPath>${basedir}/lib/jfsl-annotations.jar</systemPath>
-		</dependency>
-
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>antlr-runtime</groupId>
-			<scope>system</scope>
-			<version>3.2</version>
-			<systemPath>${basedir}/lib/antlr-runtime-3.2.jar</systemPath>
-		</dependency>
-
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>kodkod</groupId>
-			<scope>system</scope>
-			<version>1.0</version>
-			<systemPath>${basedir}/lib/kodkod.jar</systemPath>
-		</dependency>
-
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>paranamer</groupId>
-			<scope>system</scope>
-			<version>2.2</version>
-			<systemPath>${basedir}/lib/paranamer-2.2.jar</systemPath>
-		</dependency>
-
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>sat4j</groupId>
-			<scope>system</scope>
-			<version>2.3.2</version>
-			<systemPath>${basedir}/lib/sat4j-v2.3.2.jar</systemPath>
-		</dependency>
-
-		<dependency>
-			<artifactId>mit.squander</artifactId>
-			<groupId>sdg-util-independent</groupId>
-			<scope>system</scope>
-			<version>1.0</version>
-			<systemPath>${basedir}/lib/sdg-util-independent.jar</systemPath>
-		</dependency>
 
 		<!-- TESTING -->
 		<dependency>
@@ -145,15 +102,78 @@
 		</dependency>
 	</dependencies>
 
+	<profiles>
+		<profile>
+			<id>live</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>integration</id>
+								<phase>integration-test</phase>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<configuration>
+									<systemPropertyVariables>
+										<test.declarative-stub.endpoint>${test.declarative-stub.endpoint}</test.declarative-stub.endpoint>
+										<test.declarative-stub.api-version>${test.declarative-stub.api-version}</test.declarative-stub.api-version>
+										<test.declarative-stub.build-version>${test.declarative-stub.build-version}</test.declarative-stub.build-version>
+										<test.declarative-stub.identity>${test.declarative-stub.identity}</test.declarative-stub.identity>
+										<test.declarative-stub.credential>${test.declarative-stub.credential}</test.declarative-stub.credential>
+										<test.declarative-stub.template>${test.declarative-stub.template}</test.declarative-stub.template>
+										<test.declarative-stub.ebs-template>${test.declarative-stub.ebs-template}</test.declarative-stub.ebs-template>
+										<test.declarative-stub.windows-template>${test.declarative-stub.windows-template}</test.declarative-stub.windows-template>
+										<test.declarative-stub.windows-owner>${test.declarative-stub.windows-owner}</test.declarative-stub.windows-owner>
+									</systemPropertyVariables>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<build>
 		<plugins>
 			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<!-- Avoid Parallel Tests -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.16</version>
 				<configuration>
+					<jvm>1.7</jvm>
 					<parallel>classes</parallel>
 					<threadCount>4</threadCount>
+				</configuration>
+			</plugin>
+			<plugin>
+				<!-- Disable Licesing checks -->
+				<groupId>org.apache.rat</groupId>
+				<artifactId>apache-rat-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<excludes>
+						<!-- expectation files for unit tests -->
+						<exclude>**/*.*</exclude>
+					</excludes>
 				</configuration>
 			</plugin>
 		</plugins>

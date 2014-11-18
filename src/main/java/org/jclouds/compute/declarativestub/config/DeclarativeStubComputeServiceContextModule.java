@@ -15,13 +15,15 @@ public class DeclarativeStubComputeServiceContextModule extends JCloudsNativeCom
 	// Basic module dependecies and anything needed to run Adapter Fine ?
 	@Override
 	protected void configure() {
-		// This is the additional module/logic injected to provide the
-		// predefined objects/methods
-		// TODO this would be nice to extend via a mechanism that reads the
-		// available information from a cloud installation
+		// // This is the additional module/logic injected to provide the
+		// // predefined objects/methods
+		// // TODO this would be nice to extend via a mechanism that reads the
+		// // available information from a cloud installation
 		install(new DeclarativeStubComputeServiceDependenciesModule());
+		//
 		super.configure();
 	}
 
+	// Define basic
 	// FIXME: Optional extensions can be provided here !
 }
