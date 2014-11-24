@@ -1,4 +1,4 @@
-package org.jclouds.compute.declarativestub.core;
+package at.ac.tuwien.cloud.core;
 
 import java.util.Set;
 
@@ -50,24 +50,49 @@ import edu.mit.csail.sdg.annotations.SpecField;
 })
 public interface DeclarativeCloud {
 
-	// /*
-	// * Since it is not possible to create random strings we use a generative naive approach. The test assume that this
-	// * atomic integer will be reset everytime we create an instance of cloud
-	// */
-	// public static class FactoryId {
-	// final static private AtomicInteger currentId = new AtomicInteger(0);
-	//
-	// public abstract static String allocateID() {
-	// return "" + currentId.incrementAndGet();
-	// }
-	//
-	// // Only for Testing
-	// // public static void resetID() {
-	// // currentId.set(0);
-	// // }
-	// }
-
 	public DeclarativeNode createNode();
+
+	@Requires({
+			"some _locations",
+			/* All the input resources must have unique ID */
+			"all imageA : _images.elts | all imageB : _images.elts - imageA | imageA.id != null && imageA.id != imageB.id",
+			"all hardwareA : _hardwares.elts | all hardwareB : _hardwares.elts - hardwareA | hardwareA.id != null && hardwareA.id != hardwareB.id",
+			"all locationA : _locations.elts | all locationB : _locations.elts - locationA | locationA.id != null && locationA.id != locationB.id",
+			/* Input resources cannot be null */
+			"_locations != null && _hardwares != null && _images != null",
+			/* Inputs cannot contain null elements */
+			"no (null & _locations.elts) && no (null & _hardwares.elts) && no (null & _images.elts)",
+			/* Respect Location Constraints */
+			" _images.elts.location in _locations.elts", "_hardwares.elts.location in _locations.elts",
+	//
+	})
+	@Ensures({
+	/* No virtual machines are running */
+	"no this.instances", //
+			/*
+			 * Maintain the original relations in the abstract state.
+			 */
+			"this.images = _images.elts", //
+			"this.hardwares == _hardwares.elts",//
+			"this.locations == _locations.elts",//
+	// "all image : this.images "
+	// "this.images.location = _images.elts.location",
+	// //
+	// "this.hardwares.location == _hardwares.elts.location",//
+	//
+	/* EOF */})
+	@Modifies({ "this.instances", //
+			"this.images", "this.hardwares",
+			//
+			"this.locations"
+	/* EOF */
+	})
+	public void init(Set<DeclarativeImage> _images, Set<DeclarativeHardware> _hardwares,
+			Set<DeclarativeLocation> _locations);
+
+	@Ensures({ "no this.instances", "no this.images", "no this.hardwares", "no this.locations" })
+	@Modifies({ "this.instances", "this.images", "this.hardwares", "this.locations" })
+	public void init();
 
 	@Ensures("return != null && return.elts == this.locations")
 	@FreshObjects(cls = Set.class, typeParams = { DeclarativeLocation.class }, num = 1)
@@ -171,15 +196,15 @@ public interface DeclarativeCloud {
 	 * 
 	 * @param _id
 	 */
-	@Requires({
-	/*
-	 * At least one instance
-	 */
-	"some this.instances",
-	/*
-	 * The id must correspond to a deployed instance
-	 */
-	"_id in this.instances.id" })
+	// @Requires({
+	// /*
+	// * At least one instance
+	// */
+	// "some this.instances",
+	// /*
+	// * The id must correspond to a deployed instance
+	// */
+	// "_id in this.instances.id" })
 	@Ensures({
 	/* This work in spite of the invariant on id */
 	"_id !in this.instances.id",

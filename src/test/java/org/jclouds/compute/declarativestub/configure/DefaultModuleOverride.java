@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.jclouds.compute.declarativestub.config.DeclarativeStubComputeServiceDefaultSetupModule;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.util.Modules;
 
 public class DefaultModuleOverride extends AbstractModule {
 
@@ -33,12 +32,15 @@ public class DefaultModuleOverride extends AbstractModule {
 	protected void configure() {
 		System.err.println("=================================\n" + "DefaultModuleOverride.configure()\n"
 				+ "=================================");
+
 	}
 
+	// This suppliers is not injectable here ?!
 	@Provides
 	@Singleton
+	@Named("OVERRIDE_LOCATION_SET")
 	protected Set<Location> providesLocations(Supplier<Location> location) {
-		System.err.println("DefaultModuleOverride.providesLocations()");
+		System.err.println("DefaultModuleOverride.providesLocations() " + location);
 		// Empty location is fine ?!
 		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
 		// Add the one provided via injection
@@ -48,6 +50,7 @@ public class DefaultModuleOverride extends AbstractModule {
 
 	@Provides
 	@Singleton
+	@Named("OVERRIDE_IMAGE_SET")
 	protected Set<Image> providesImages(Set<Location> locations, Map<OsFamily, Map<String, String>> osToVersionMap) {
 		System.err.println("DefaultModuleOverride.providesImages()");
 		Location location = locations.iterator().next();
@@ -94,6 +97,7 @@ public class DefaultModuleOverride extends AbstractModule {
 
 	@Provides
 	@Singleton
+	@Named("OVERRIDE_HARDWARE_SET")
 	protected Set<Hardware> providesHardwares(Set<Location> locations) {
 		System.err.println("DefaultModuleOverride.providesHardwares()");
 		// This is similar to listImage

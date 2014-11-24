@@ -1,11 +1,9 @@
 package org.jclouds.compute.declarativestub.configure;
 
-import java.util.Set;
-
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
-import org.jclouds.compute.declarativestub.config.DeclarativeStubComputeServiceDefaultSetupModule;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -21,9 +19,9 @@ public class ModuleOverrideTest {
 	public void testDoNotOverride() {
 
 		// FIXME I would like to specify a module and then override iff provided
-		Set<Module> modules = ImmutableSet.<Module> builder()
-				.add(new DeclarativeStubComputeServiceDefaultSetupModule()).build();
-		context = ContextBuilder.newBuilder("declarative-stub").credentials("identity", "credential").modules(modules)
+		// Set<Module> modules = ImmutableSet.<Module> builder()
+		// .add(new DeclarativeStubComputeServiceDefaultSetupModule()).build();
+		context = ContextBuilder.newBuilder("declarative-stub").credentials("identity", "credential")// .modules(modules)
 				.buildView(ComputeServiceContext.class);
 
 		Assert.assertTrue(context.getComputeService().listImages().size() == 2);
@@ -32,7 +30,8 @@ public class ModuleOverrideTest {
 
 	@Test
 	public void testOverride() {
-		Set<Module> modules = ImmutableSet.<Module> builder().add(new DefaultModuleOverride()).build();
+		// Set<Module> modules = ImmutableSet.<Module> builder().add(new DefaultModuleOverride()).build();
+		Iterable<Module> modules = ImmutableSet.<Module> of(new SLF4JLoggingModule(), new DefaultModuleOverride());
 
 		context = ContextBuilder.newBuilder("declarative-stub").credentials("identity", "credential").modules(modules)
 				.buildView(ComputeServiceContext.class);

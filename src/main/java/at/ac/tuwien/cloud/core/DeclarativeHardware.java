@@ -1,4 +1,4 @@
-package org.jclouds.compute.declarativestub.core;
+package at.ac.tuwien.cloud.core;
 
 public class DeclarativeHardware extends DeclarativeResource {
 	private String name;

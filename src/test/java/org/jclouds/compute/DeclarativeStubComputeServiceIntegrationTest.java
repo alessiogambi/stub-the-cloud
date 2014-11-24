@@ -30,6 +30,7 @@ import static org.jclouds.util.Predicates2.retry;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +49,13 @@ import org.jclouds.predicates.SocketOpen;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.SshClient;
 import org.jclouds.util.Strings2;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import at.ac.tuwien.cloud.JcloudsStub;
+import at.ac.tuwien.cloud.core.DeclarativeHardware;
+import at.ac.tuwien.cloud.core.DeclarativeImage;
+import at.ac.tuwien.cloud.core.DeclarativeLocation;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -82,12 +89,59 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
 		SquanderGlobalOptions.INSTANCE.noOverflow = true;
 		SquanderGlobalOptions.INSTANCE.min_bitwidth = 5;
+
 		provider = "declarative-stub";
+
+	}
+
+	@BeforeClass
+	public static void setupTheCloud() {
+
+		// Initialize the CLOUD instance !
+
+		// TODO Concretization-Abstraction functions !!!
+
+		// The following code won't work because the model yet miss some of the data required by the current tests
+		// Those can be abstracted as well by adding more information to the model itself, however since the data are
+		// not really relevant for most of the stubbing functionality with may also opt to cache them and do the
+		// abstraction inside the client
+
+		// DeclarativeLocation dl = new DeclarativeLocation();
+		// dl.setId("Location-1");
+		//
+		// Set<DeclarativeLocation> locations = new HashSet<DeclarativeLocation>();
+		// locations.add(dl);
+		//
+		// Set<DeclarativeHardware> hardwares = new HashSet<DeclarativeHardware>();
+		// DeclarativeHardware dh;
+		// dh = new DeclarativeHardware();
+		// dh.setId("Hw-1");
+		// dh.setLocation(dl);
+		// hardwares.add(dh);
+		//
+		// dh = new DeclarativeHardware();
+		// dh.setId("Hw-2");
+		// dh.setLocation(dl);
+		// hardwares.add(dh);
+		//
+		// Set<DeclarativeImage> images = new HashSet<DeclarativeImage>();
+		// DeclarativeImage di;
+		// di = new DeclarativeImage();
+		// di.setId("Image-1");
+		// di.setLocation(dl);
+		// di.setName("ami-abcd123");
+		//
+		// CloudStub.setupInstance(locations, hardwares, images);
+
 	}
 
 	@Override
 	public void testCorrectAuthException() throws Exception {
 	}
+
+	/**
+	 * 
+	 */
 
 	protected void buildSocketTester() {
 		SocketOpen socketOpen = createMock(SocketOpen.class);
@@ -113,6 +167,11 @@ public class DeclarativeStubComputeServiceIntegrationTest extends BaseComputeSer
 
 	}
 
+	/**
+	 * TODO FIXME: Look at how the ssh module is implemented and do it for the cloud itself. Here in the test we set up
+	 * the precondition of the ssh mock that eventually is used by the jcloud implementation. Possibly this is defined
+	 * inside the test itself... in that case update the test!!
+	 */
 	@Override
 	protected Module getSshModule() {
 		return new AbstractModule() {

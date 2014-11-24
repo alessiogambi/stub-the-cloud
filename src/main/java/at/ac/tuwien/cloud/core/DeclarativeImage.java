@@ -1,4 +1,4 @@
-package org.jclouds.compute.declarativestub.core;
+package at.ac.tuwien.cloud.core;
 
 public class DeclarativeImage extends DeclarativeResource {
 

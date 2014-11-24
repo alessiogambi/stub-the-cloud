@@ -5,27 +5,19 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
 
-import org.jclouds.compute.declarativestub.core.impl.DeclarativeCloudStub;
-import org.jclouds.compute.domain.Hardware;
-import org.jclouds.compute.domain.HardwareBuilder;
-import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
-import org.jclouds.compute.domain.ImageStatus;
 import org.jclouds.compute.domain.NodeMetadataStatus;
-import org.jclouds.compute.domain.OperatingSystem;
-import org.jclouds.compute.domain.OsFamily;
-import org.jclouds.compute.domain.Processor;
-import org.jclouds.compute.domain.Volume;
-import org.jclouds.compute.domain.internal.VolumeImpl;
-import org.jclouds.domain.Location;
-import org.jclouds.domain.LocationBuilder;
-import org.jclouds.domain.LocationScope;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.ImmutableList;
+import at.ac.tuwien.cloud.core.DeclarativeCloud;
+import at.ac.tuwien.cloud.core.DeclarativeHardware;
+import at.ac.tuwien.cloud.core.DeclarativeImage;
+import at.ac.tuwien.cloud.core.DeclarativeLocation;
+import at.ac.tuwien.cloud.core.DeclarativeNode;
+import at.ac.tuwien.cloud.core.impl.DeclarativeCloudImpl;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
 
@@ -41,7 +33,7 @@ import edu.mit.csail.sdg.squander.options.SquanderGlobalOptions;
  *
  *         TODO Create an abstract test for the interface and a concrete test here
  */
-public class DeclarativeCloudStubTest {
+public class DeclarativeCloudTest {
 
 	/*
 	 * SUT. The ID generation fails if multiple tests are run concurrently ?!
@@ -51,12 +43,12 @@ public class DeclarativeCloudStubTest {
 	@BeforeMethod(alwaysRun = true)
 	public void initializeCloud() {
 
-		System.out.println("DeclarativeCloudStubTest.initializeCloud() " + System.getProperties());
+		// System.out.println("DeclarativeCloudStubTest.initializeCloud() " + System.getProperties());
 
 		SquanderGlobalOptions.INSTANCE.log_level = Level.NONE;
 
-		Set<Location> defaultDeclarativeLocations = createDefaultDeclarativeLocationsForTest();
-		cloud = new DeclarativeCloudStub(
+		Set<DeclarativeLocation> defaultDeclarativeLocations = createDefaultDeclarativeLocationsForTest();
+		cloud = new DeclarativeCloudImpl(
 		//
 				createDefaultDeclarativeImagesForTest(defaultDeclarativeLocations),
 				//
@@ -75,7 +67,7 @@ public class DeclarativeCloudStubTest {
 
 	@Test
 	public void testInitEmptyCloud() {
-		cloud = new DeclarativeCloudStub();
+		cloud = new DeclarativeCloudImpl();
 		System.out.println("DeclarativeCloudTest.testInit() " + cloud);
 		Assert.assertNotNull(cloud.getAllLocations());
 		Assert.assertNotNull(cloud.getAllHardwares());
@@ -96,10 +88,10 @@ public class DeclarativeCloudStubTest {
 	public void testCannotCreateNodeWithMalformedInit() {
 		try {
 			// Split DeclarativeLocations
-			Set<Location> originalDeclarativeLocations = createDefaultDeclarativeLocationsForTest();
-			Iterator<Location> i = originalDeclarativeLocations.iterator();
-			Location DeclarativeLocation1 = i.next();
-			Location DeclarativeLocation2 = i.next();
+			Set<DeclarativeLocation> originalDeclarativeLocations = createDefaultDeclarativeLocationsForTest();
+			Iterator<DeclarativeLocation> i = originalDeclarativeLocations.iterator();
+			DeclarativeLocation DeclarativeLocation1 = i.next();
+			DeclarativeLocation DeclarativeLocation2 = i.next();
 
 			System.out
 					.println("DeclarativeCloudTest.testMalformedInit() DeclarativeLocation 1 " + DeclarativeLocation1);
@@ -109,10 +101,12 @@ public class DeclarativeCloudStubTest {
 			assert DeclarativeLocation1 != DeclarativeLocation2;
 
 			// Set 1 & Set 2 == empty
-			Set<Location> set1 = ImmutableSet.<Location> builder().add(DeclarativeLocation1).build();
-			Set<Location> set2 = ImmutableSet.<Location> builder().add(DeclarativeLocation2).build();
+			Set<DeclarativeLocation> set1 = ImmutableSet.<DeclarativeLocation> builder().add(DeclarativeLocation1)
+					.build();
+			Set<DeclarativeLocation> set2 = ImmutableSet.<DeclarativeLocation> builder().add(DeclarativeLocation2)
+					.build();
 
-			cloud = new DeclarativeCloudStub(createDefaultDeclarativeImagesForTest(set1),
+			cloud = new DeclarativeCloudImpl(createDefaultDeclarativeImagesForTest(set1),
 			//
 					createDefaultDeclarativeHardwaresForTest(set2),
 					//
@@ -130,7 +124,7 @@ public class DeclarativeCloudStubTest {
 
 	@Test
 	public void testListNodesEmpty() {
-		cloud = new DeclarativeCloudStub();
+		cloud = new DeclarativeCloudImpl();
 		Assert.assertEquals(cloud.getAllNodes().size(), 0);
 	}
 
@@ -138,7 +132,7 @@ public class DeclarativeCloudStubTest {
 	public void testPreConditionFailOnCreateNode() {
 		try {
 			// PreConditions must fail
-			cloud = new DeclarativeCloudStub();
+			cloud = new DeclarativeCloudImpl();
 			cloud.createNode();
 			Assert.fail();
 		} catch (Exception e) {
@@ -149,7 +143,7 @@ public class DeclarativeCloudStubTest {
 	}
 
 	public void testListDeclarativeImagesEmptyCloud() {
-		DeclarativeCloud c = new DeclarativeCloudStub();
+		DeclarativeCloud c = new DeclarativeCloudImpl();
 		System.out.println("DeclarativeCloudTest.testInit() " + c.getAllImages());
 	}
 
@@ -180,52 +174,67 @@ public class DeclarativeCloudStubTest {
 		Assert.assertEquals(cloud.getAllLocations().size(), createDefaultDeclarativeLocationsForTest().size());
 	}
 
-	public static Set<Image> createDefaultDeclarativeImagesForTest(Set<Location> locations) {
+	public static Set<DeclarativeImage> createDefaultDeclarativeImagesForTest(Set<DeclarativeLocation> locations) {
 		// Note we need to guarantee that DeclarativeImages are registered in their
 		// DeclarativeLocations
-		Builder<Image> images = ImmutableSet.builder();
+		Builder<DeclarativeImage> images = ImmutableSet.builder();
 		int id = 0;
-		Image image = new ImageBuilder().ids("DeclarativeImage" + ++id).name("DeclarativeImage" + id)
-				.location(locations.iterator().next())
-				.operatingSystem(new OperatingSystem(OsFamily.LINUX, "desc", "version", null, "desc", false))
-				.description("desc").status(ImageStatus.AVAILABLE).build();
+
+		DeclarativeImage image = new DeclarativeImage();
+		image.setId("DeclarativeImage" + ++id);
+		image.setName("DeclarativeImage" + id);
+		image.setLocation(locations.iterator().next());
 
 		images.add(image);
 
-		image = new ImageBuilder().ids("DeclarativeImage" + ++id).name("DeclarativeImage" + id)
-				.location(locations.iterator().next())
-				.operatingSystem(new OperatingSystem(OsFamily.WINDOWS, "desc", "version", null, "desc", true))
-				.description("desc").status(ImageStatus.AVAILABLE).build();
+		image = new DeclarativeImage();
+		image.setId("DeclarativeImage" + ++id);
+		image.setName("DeclarativeImage" + id);
+		image.setLocation(locations.iterator().next());
 		images.add(image);
 
 		return images.build();
 	}
 
-	public static Set<Location> createDefaultDeclarativeLocationsForTest() {
-		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
+	public static Set<DeclarativeLocation> createDefaultDeclarativeLocationsForTest() {
+		ImmutableSet.Builder<DeclarativeLocation> locations = ImmutableSet.builder();
 		int id = 1;
-		locations.add(new LocationBuilder().id("DeclarativeLocation-" + id++)
-				.description("DeclarativeLocation-description").scope(LocationScope.ZONE).build());
-		locations.add(new LocationBuilder().id("DeclarativeLocation-" + id++)
-				.description("Another-DeclarativeLocation-description").scope(LocationScope.ZONE).build());
+
+		DeclarativeLocation location;
+
+		location = new DeclarativeLocation();
+		location.setId("DeclarativeLocation-" + id++);
+		locations.add(location);
+
+		location = new DeclarativeLocation();
+		location.setId("DeclarativeLocation-" + id++);
+		locations.add(location);
+
 		return locations.build();
 	}
 
-	public static Set<Hardware> createDefaultDeclarativeHardwaresForTest(Set<Location> locations) {
+	public static Set<DeclarativeHardware> createDefaultDeclarativeHardwaresForTest(Set<DeclarativeLocation> locations) {
 		int id = 1;
-		ImmutableSet.Builder<Hardware> flavors = ImmutableSet.builder();
+		ImmutableSet.Builder<DeclarativeHardware> flavors = ImmutableSet.builder();
 
-		flavors.add(new HardwareBuilder().ids("HW-" + id++).name("small")
-				.processors(ImmutableList.of(new Processor(1, 1.0))).ram(1740).location(locations.iterator().next())
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 160, true, false))).build());
+		DeclarativeHardware hardware;
+		hardware = new DeclarativeHardware();
+		hardware.setId("DeclarativeHardware-" + ++id);
+		hardware.setLocation(locations.iterator().next());
+		hardware.setName("DeclarativeHardware-" + id);
+		flavors.add(hardware);
 
-		flavors.add(new HardwareBuilder().ids("HW-" + id++).name("medium")
-				.processors(ImmutableList.of(new Processor(4, 1.0))).ram(7680).location(locations.iterator().next())
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 850, true, false))).build());
+		hardware = new DeclarativeHardware();
+		hardware.setId("DeclarativeHardware-" + ++id);
+		hardware.setLocation(locations.iterator().next());
+		hardware.setName("DeclarativeHardware-" + id);
+		flavors.add(hardware);
 
-		flavors.add(new HardwareBuilder().ids("HW-" + id++).name("large")
-				.processors(ImmutableList.of(new Processor(8, 1.0))).ram(15360).location(locations.iterator().next())
-				.volumes(ImmutableList.<Volume> of(new VolumeImpl((float) 1690, true, false))).build());
+		hardware = new DeclarativeHardware();
+		hardware.setId("DeclarativeHardware-" + ++id);
+		hardware.setLocation(locations.iterator().next());
+		hardware.setName("DeclarativeHardware-" + id);
+		flavors.add(hardware);
 
 		return flavors.build();
 	}
@@ -268,7 +277,7 @@ public class DeclarativeCloudStubTest {
 	@Test
 	public void testFailCreateNodeIfNoDeclarativeImages() {
 		try {
-			cloud = new DeclarativeCloudStub();
+			cloud = new DeclarativeCloudImpl();
 			DeclarativeNode n = cloud.createNode();
 			System.out.println("DeclarativeCloudTest.testaddNode() Node " + n);
 			Assert.fail("pre-condition is not satisfied not raised for empty cloud!");

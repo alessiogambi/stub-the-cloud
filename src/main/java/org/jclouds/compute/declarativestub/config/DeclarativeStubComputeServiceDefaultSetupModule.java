@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.name.Named;
 
 public class DeclarativeStubComputeServiceDefaultSetupModule extends AbstractModule {
 
@@ -34,7 +35,9 @@ public class DeclarativeStubComputeServiceDefaultSetupModule extends AbstractMod
 
 	@Provides
 	@Singleton
+	@Named("DEFAULT_LOCATION_SET")
 	protected Set<Location> providesLocations(Supplier<Location> location) {
+
 		// Empty location is fine ?!
 		ImmutableSet.Builder<Location> locations = ImmutableSet.builder();
 		// Add the one provided via injection
@@ -44,7 +47,10 @@ public class DeclarativeStubComputeServiceDefaultSetupModule extends AbstractMod
 
 	@Provides
 	@Singleton
-	protected Set<Image> providesImages(Set<Location> locations, Map<OsFamily, Map<String, String>> osToVersionMap) {
+	@Named("DEFAULT_IMAGE_SET")
+	protected Set<Image> providesImages(
+
+	Set<Location> locations, Map<OsFamily, Map<String, String>> osToVersionMap) {
 		Location location = locations.iterator().next();
 		ImmutableSet.Builder<Image> images = ImmutableSet.<Image> builder();
 		int id = 1;
@@ -92,6 +98,7 @@ public class DeclarativeStubComputeServiceDefaultSetupModule extends AbstractMod
 
 	@Singleton
 	@Provides
+	@Named("DEFAULT_HARDWARE_SET")
 	protected Set<Hardware> providesHardwares(Set<Location> locations) {
 		// This is similar to listImage
 		Location location = locations.iterator().next();

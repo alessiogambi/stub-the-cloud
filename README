@@ -4,3 +4,18 @@ Define the specifications of the cloud in term of ONLY pure atoms and classes, t
 Afterwards will try to make abstraction-concretization functions or some other mapping
 
 To show case the specifications we implements a declarative jclouds provider
+
+
+# Architecture
+
+The STUB object receives the contributions or contains the following parts:
+
+	- Cloud Model(s)
+	
+	- Abstraction/Concretization functions. Mapping between object model and concrete objects
+	
+	- Implements the INIT method in terms of app-specific objects that are managed by the Abstraction function
+	
+	- Exposes the required methods to interact with the cloud
+	
+In the first implementation the STUB instances are managed by a simple factory.

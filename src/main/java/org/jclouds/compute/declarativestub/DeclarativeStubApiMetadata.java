@@ -45,11 +45,8 @@ public class DeclarativeStubApiMetadata extends BaseApiMetadata {
 					.defaultEndpoint("local-memory")
 					.documentation(URI.create("http://www.infosys.tuwien.ac.at/staff/agambi/blog/"))
 					.view(ComputeServiceContext.class)
-					.defaultModules(
-							ImmutableSet.<Class<? extends Module>> builder()
-									.add(DeclarativeStubComputeServiceContextModule.class)
-									// .add(DeclarativeStubComputeServiceDefaultSetupModule.class)
-									.build());
+					.defaultModule(DeclarativeStubComputeServiceContextModule.class)
+			.build();
 
 		}
 
