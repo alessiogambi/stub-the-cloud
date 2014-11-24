@@ -1,12 +1,10 @@
-package org.jclouds.compute;
+package org.jclouds.compute.declarativestub.config;
 
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.predicates.SocketOpen;
 
 import at.ac.tuwien.cloud.JCloudsStubFactory;
 import at.ac.tuwien.cloud.JcloudsStub;
-import at.ac.tuwien.cloud.core.DeclarativeCloud;
-import at.ac.tuwien.cloud.core.DeclarativeNode;
 
 import com.google.common.net.HostAndPort;
 import com.google.inject.AbstractModule;

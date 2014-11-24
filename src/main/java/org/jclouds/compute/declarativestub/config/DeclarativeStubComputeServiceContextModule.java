@@ -1,6 +1,5 @@
 package org.jclouds.compute.declarativestub.config;
 
-import org.jclouds.compute.DeclarativeStubComputeServiceDependenciesModule;
 import org.jclouds.compute.config.JCloudsNativeComputeServiceAdapterContextModule;
 import org.jclouds.concurrent.SingleThreaded;
 
